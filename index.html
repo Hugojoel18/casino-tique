@@ -330,6 +330,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   [style*="gap:8px"]{gap:6px!important}
 }
 </style>
+  <!-- Firebase compat (no requiere ES modules) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -433,17 +436,16 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       var err = document.getElementById('login-error');
       if(err){ err.style.display='block'; err.textContent='Error al conectar con Firebase. Verifica tu conexión e intenta de nuevo.'; }
     }
-  }, 12000);
+  }, 6000);
   // Si el módulo carga OK, el propio arrancar() llama a esto y cancelamos el fallback
   window.__cancelFallback = function(){ clearTimeout(t); };
 })();
 </script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, getDoc, setDoc, getDocs, query, orderBy, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+<script>
 
 const firebaseConfig={apiKey:"AIzaSyD0NVexMs1CDyKHzust-1c4uZ44Uz75Ubk",authDomain:"casino-tique.firebaseapp.com",projectId:"casino-tique",storageBucket:"casino-tique.firebasestorage.app",messagingSenderId:"22489931308",appId:"1:22489931308:web:2a45d7e4687d70ee403b89"};
-const app=initializeApp(firebaseConfig),db=getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
 
 const ROLE_LBL={admin:'Administrador',cajera:'Cajera',bovedista:'Bovedista',supervisor:'Supervisor',gerente:'Gerente'};
 const ROLE_CSS={admin:'role-admin',cajera:'role-cajera',bovedista:'role-bovedista',supervisor:'role-supervisor',gerente:'role-gerente'};
@@ -475,10 +477,10 @@ async function arrancar(){
   try{
     // Timeout de 8 segundos — si Firebase no responde, mostramos login igual
     const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),8000));
-    const adminRef=doc(db,'usuarios','admin');
+    const adminRef=db.collection('usuarios').doc('admin');
     await Promise.race([
-      getDoc(adminRef).then(async snap=>{
-        if(!snap.exists()) await setDoc(adminRef,{nombre:'Hugo Esquer',username:'admin',rol:'admin',pass:'Admin2024',primerAcceso:true,activo:true,createdAt:serverTimestamp()});
+      adminRef.get().then(async snap=>{
+        if(!snap.exists) await adminRef.set({nombre:'Hugo Esquer',username:'admin',rol:'admin',pass:'Admin2024',primerAcceso:true,activo:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
       }),
       timeout
     ]);
@@ -496,7 +498,7 @@ window.doLogin=async function(){
   const pass=document.getElementById('login-pass').value;
   const err=document.getElementById('login-error');
   if(!username||!pass){err.style.display='block';err.textContent='Ingresa usuario y contraseña.';return}
-  const snap=await getDocs(collection(db,'usuarios'));
+  const snap=await db.collection('usuarios'.get());
   let userData=null,userId=null;
   snap.forEach(d=>{const u=d.data();if(u.username?.toLowerCase()===username&&u.pass===pass&&u.activo!==false){userData=u;userId=d.id;}});
   if(!userData){err.style.display='block';err.textContent='Usuario o contraseña incorrectos.';return}
@@ -515,7 +517,7 @@ window.cambiarPass=async function(){
   const err=document.getElementById('change-pass-error');
   if(p1.length<6){err.style.display='block';err.textContent='Mínimo 6 caracteres.';return}
   if(p1!==p2){err.style.display='block';err.textContent='No coinciden.';return}
-  await updateDoc(doc(db,'usuarios',currentUser.id),{pass:p1,primerAcceso:false});
+  await db.collection('usuarios').doc(currentUser.id).update({pass:p1,primerAcceso:false});
   currentUser.pass=p1;currentUser.primerAcceso=false;
   document.getElementById('change-pass-screen').style.display='none';entrarAlSistema();
 }
@@ -541,7 +543,7 @@ window.guardarMiPass=async function(){
   if(actual!==currentUser.pass){msg.innerHTML='<div class="alert alert-danger">Contraseña actual incorrecta.</div>';return}
   if(n1.length<6){msg.innerHTML='<div class="alert alert-danger">Mínimo 6 caracteres.</div>';return}
   if(n1!==n2){msg.innerHTML='<div class="alert alert-danger">No coinciden.</div>';return}
-  await updateDoc(doc(db,'usuarios',currentUser.id),{pass:n1});currentUser.pass=n1;
+  await db.collection('usuarios').doc(currentUser.id).update({pass:n1});currentUser.pass=n1;
   msg.innerHTML='<div class="alert alert-success">✓ Contraseña actualizada.</div>';
   setTimeout(()=>closeModal('modal-mypass'),1500);
 }
@@ -549,8 +551,7 @@ window.guardarMiPass=async function(){
 // ── FIREBASE ──────────────────────────────────────────────────
 function conectar(){
   if(unsubscribe)unsubscribe();
-  unsubscribe=onSnapshot(query(collection(db,'cortes'),orderBy('fecha','desc')),
-    snap=>{cortesCache=snap.docs.map(d=>({id:d.id,...d.data()}));setSyncStatus(true);
+  unsubscribe=db.collection('cortes').orderBy('fecha','desc').onSnapshot(snap=>{cortesCache=snap.docs.map(d=>({id:d.id,...d.data()}));setSyncStatus(true);
       if(currentUser?.rol==='cajera') renderCajera();
       if(currentUser?.rol==='bovedista') renderBovedista();
       if(['supervisor','gerente','admin'].includes(currentUser?.rol)) refrescarCortes();
@@ -748,9 +749,9 @@ window.enviarCorteCajera=async function(){
   const fechaTurnoStr=`${fechaTurno.getFullYear()}-${String(fechaTurno.getMonth()+1).padStart(2,'0')}-${String(fechaTurno.getDate()).padStart(2,'0')}`;
 
   try{
-    await addDoc(collection(db,'cortes'),{
+    await db.collection('cortes').add({
       cajera:currentUser.nombre,cajera_id:currentUser.id,turno,
-      fecha:serverTimestamp(),
+      fecha:firebase.firestore.FieldValue.serverTimestamp(),
       fechaTurno:fechaTurnoStr, // fecha del turno (no de cierre)
       billetes,
       totalEfectivo:efectivo,
@@ -964,7 +965,7 @@ window.confirmarBov=async function(id){
   // Esperar a que se imprima y luego sellar
   const varianza=recibido-balance;  const btn=document.querySelector(`[onclick="confirmarBov('${id}')"]`);if(btn){btn.disabled=true;btn.textContent='Sellando...'}
   try{
-    await updateDoc(doc(db,'cortes',id),{
+    await db.collection('cortes').doc(id).update({
       numTurno:nv('bov-numturno'),montoApertura:nv('bov-apertura'),
       sys_efectivo:nv('bov-sys-efectivo'),sys_tarjetas:nv('bov-sys-tarjetas'),
       sys_pagosManuales:nv('bov-sys-manuales'),sys_jackpots:nv('bov-sys-jackpots'),
@@ -972,7 +973,7 @@ window.confirmarBov=async function(id){
       bov_efectivo:bovEfectivo,bov_tarjetas:bovTarjetas,bov_manuales:bovManuales,
       bov_dolares:bovDolares,bov_tipoCambio:bovTipoCambio,bov_dolaresPesos:bovDolaresPesos,
       bov_nombre:currentUser.nombre,obs_bov:document.getElementById('bov-obs')?.value||'',
-      fecha_bov:serverTimestamp(),estado:'completo',varianza,
+      fecha_bov:firebase.firestore.FieldValue.serverTimestamp(),estado:'completo',varianza,
       estado_varianza:Math.abs(varianza)<0.01?'ok':varianza<0?'faltante':'sobrante'
     });
     const ok=Math.abs(varianza)<0.01,neg=varianza<0;
@@ -1015,7 +1016,7 @@ window.confirmarBov=async function(id){
 // GERENTE — cortes + gestión de usuarios (sin tocar admins)
 // ══════════════════════════════════════════════════════════════
 async function renderGerente(){
-  const snap=await getDocs(collection(db,'usuarios'));
+  const snap=await db.collection('usuarios'.get());
   usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   document.getElementById('main-content').innerHTML=`
     <div class="sec-header"><div><h3>Panel de gerente</h3><p>Bienvenido, ${currentUser.nombre}</p></div></div>
@@ -1110,13 +1111,13 @@ window.guardarUsuarioGerente=async function(){
   if(['admin'].includes(rol)){msg.innerHTML='<div class="alert alert-danger">No tienes permiso para crear administradores.</div>';return}
   if(!nombre||!username){msg.innerHTML='<div class="alert alert-danger">Nombre y usuario son obligatorios.</div>';return}
   if(!pass){msg.innerHTML='<div class="alert alert-danger">Ingresa una contraseña temporal.</div>';return}
-  const todos=await getDocs(collection(db,'usuarios'));
+  const todos=await db.collection('usuarios'.get());
   const existe=todos.docs.find(d=>d.data().username===username);
   if(existe){msg.innerHTML='<div class="alert alert-danger">Ese usuario ya existe.</div>';return}
   try{
-    await addDoc(collection(db,'usuarios'),{nombre,username,rol,pass,primerAcceso:true,activo:true,createdAt:serverTimestamp()});
+    await db.collection('usuarios').add({nombre,username,rol,pass,primerAcceso:true,activo:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     msg.innerHTML=`<div class="alert alert-success">✓ Usuario creado.<br>@${username} · Contraseña temporal: <strong>${pass}</strong></div>`;
-    const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
     setTimeout(()=>{closeModal('modal-usuario');renderGerenteUsuarios();},2000);
   }catch(e){msg.innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>'}
 }
@@ -1125,9 +1126,9 @@ window.resetearPassGerente=async function(id){
   if(u.rol==='admin'){alert('No tienes permiso para resetear la contraseña del administrador.');return}
   const np=prompt(`Nueva contraseña temporal para ${u.nombre}:`);
   if(!np||np.length<4){if(np!==null)alert('Mínimo 4 caracteres.');return}
-  await updateDoc(doc(db,'usuarios',id),{pass:np,primerAcceso:true});
+  await db.collection('usuarios').doc(id).update({pass:np,primerAcceso:true});
   alert(`✓ Contraseña de ${u.nombre} reseteada.\nContraseña temporal: "${np}"`);
-  const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderGerenteUsuarios();
 }
 
@@ -1442,7 +1443,7 @@ window.guardarEdicionCorte=async function(){
   const bov_efectivoRecibido=bov_efectivo+bov_tarjetas+bov_manuales;
   const varianza=bov_efectivoRecibido-sys_balance;
   try{
-    await updateDoc(doc(db,'cortes',editingCorteId),{
+    await db.collection('cortes').doc(editingCorteId).update({
       totalEfectivo,totalTarjetas,totalManuales,totalGeneral,
       sys_efectivo,sys_tarjetas,sys_pagosManuales:sys_manuales,sys_jackpots,sys_balance,
       bov_efectivo,bov_tarjetas,bov_manuales,
@@ -1484,7 +1485,7 @@ window.borrarCorte=async function(id,cajera){
     return;
   }
   try{
-    await deleteDoc(doc(db,'cortes',id));
+    await db.collection('cortes').doc(id.delete());
   }catch(e){
     alert('Error al borrar: '+e.message);
   }
@@ -1505,7 +1506,7 @@ window.exportarCSV=function(){
 // ADMIN
 // ══════════════════════════════════════════════════════════════
 async function renderAdmin(){
-  const snap=await getDocs(collection(db,'usuarios'));
+  const snap=await db.collection('usuarios'.get());
   usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   document.getElementById('main-content').innerHTML=`
     <div class="sec-header"><div><h3>Panel de administrador</h3><p>Bienvenido, ${currentUser.nombre}</p></div></div>
@@ -1691,10 +1692,10 @@ window.guardarUsuario=async function(){
   const existe=usuariosCache.find(u=>u.username===username&&u.id!==editingUserId);
   if(existe){msg.innerHTML='<div class="alert alert-danger">Ese usuario ya existe.</div>';return}
   try{
-    if(editingUserId){await updateDoc(doc(db,'usuarios',editingUserId),{nombre,username,rol});}
-    else{await addDoc(collection(db,'usuarios'),{nombre,username,rol,pass,primerAcceso:true,activo:true,createdAt:serverTimestamp()});}
+    if(editingUserId){await db.collection('usuarios').doc(editingUserId).update({nombre,username,rol});}
+    else{await db.collection('usuarios').add({nombre,username,rol,pass,primerAcceso:true,activo:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}
     msg.innerHTML=editingUserId?'<div class="alert alert-success">✓ Usuario actualizado.</div>':`<div class="alert alert-success">✓ Usuario creado.<br>@${username} · Contraseña: <strong>${pass}</strong></div>`;
-    const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
     setTimeout(()=>{closeModal('modal-usuario');renderAdminUsuarios();},2000);
   }catch(e){msg.innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>'}
 }
@@ -1702,16 +1703,16 @@ window.resetearPass=async function(id){
   const u=usuariosCache.find(x=>x.id===id);if(!u)return;
   const np=prompt(`Nueva contraseña temporal para ${u.nombre}:`);
   if(!np||np.length<4){if(np!==null)alert('Mínimo 4 caracteres.');return}
-  await updateDoc(doc(db,'usuarios',id),{pass:np,primerAcceso:true});
+  await db.collection('usuarios').doc(id).update({pass:np,primerAcceso:true});
   alert(`✓ Contraseña de ${u.nombre} reseteada.\nContraseña temporal: "${np}"`);
-  const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderAdminUsuarios();
 }
 window.toggleActivo=async function(id,activo){
   const u=usuariosCache.find(x=>x.id===id);
   if(!confirm(`¿${activo?'Desactivar':'Activar'} a ${u?.nombre}?`))return;
-  await updateDoc(doc(db,'usuarios',id),{activo:!activo});
-  const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  await db.collection('usuarios').doc(id).update({activo:!activo});
+  const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderAdminUsuarios();
 }
 </script>
