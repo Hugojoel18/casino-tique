@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Casino Tique">
+<meta name="theme-color" content="#0f0f14">
+<title>Control de Cortes — Casino Tique</title>
+<style>
+:root{
+  --bg:#0f0f14;--surface:#1a1a24;--surface2:#22222f;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#f0eef8;--text2:#9997b0;--text3:#5e5c78;
+  --purple:#7c6fff;--purple-dark:#5a4fd6;--purple-glow:rgba(124,111,255,0.15);
+  --green:#3ecf8e;--green-bg:rgba(62,207,142,0.1);--green-border:rgba(62,207,142,0.3);
+  --red:#f56565;--red-bg:rgba(245,101,101,0.1);--red-border:rgba(245,101,101,0.3);
+  --amber:#f6ad55;--amber-bg:rgba(246,173,85,0.1);--amber-border:rgba(246,173,85,0.3);
+  --blue:#63b3ed;--blue-bg:rgba(99,179,237,0.1);--blue-border:rgba(99,179,237,0.25);
+  --radius:10px;--radius-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:15px;min-height:100vh}
+#loading-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#login-screen,#change-pass-screen{min-height:100vh;display:none;align-items:center;justify-content:center;padding:2rem}
+.login-card{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:2.5rem 2rem;width:100%;max-width:400px}
+.diamond{display:inline-block;width:44px;height:44px;background:var(--purple);transform:rotate(45deg);border-radius:6px;margin-bottom:12px}
+.login-logo{text-align:center;margin-bottom:2rem}
+.login-logo h1{font-size:18px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.login-logo p{font-size:12px;color:var(--text2);margin-top:4px}
+.fg{margin-bottom:1rem}
+.fg label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.fg input,.fg select{width:100%;padding:10px 14px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none;transition:border-color .2s}
+.fg input:focus,.fg select:focus{border-color:var(--purple)}
+.btn{padding:10px 20px;border-radius:var(--radius);border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--purple);color:#fff;width:100%;padding:12px}
+.btn-primary:hover{background:var(--purple-dark)}
+.btn-sm{padding:7px 16px;font-size:13px}
+.btn-xs{padding:5px 12px;font-size:12px}
+.btn-outline{background:transparent;border:0.5px solid var(--border2);color:var(--text2)}
+.btn-outline:hover{border-color:var(--purple);color:var(--purple)}
+.btn-green{background:var(--green-bg);color:var(--green);border:0.5px solid var(--green-border)}
+.btn-red{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border)}
+.btn-amber{background:var(--amber-bg);color:var(--amber);border:0.5px solid var(--amber-border)}
+.btn-print{background:var(--blue-bg);color:var(--blue);border:0.5px solid var(--blue-border)}
+.login-error{color:var(--red);font-size:13px;text-align:center;margin-top:10px;display:none}
+#app-screen{display:none;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo-sm{width:26px;height:26px;background:var(--purple);transform:rotate(45deg);border-radius:4px;flex-shrink:0}
+.topbar h2{font-size:14px;font-weight:700;letter-spacing:.5px}
+.role-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.role-admin{background:rgba(255,100,100,0.15);color:#ff8080}
+.role-cajera{background:var(--blue-bg);color:var(--blue)}
+.role-bovedista{background:var(--amber-bg);color:var(--amber)}
+.role-supervisor{background:var(--purple-glow);color:var(--purple)}
+.role-gerente{background:var(--green-bg);color:var(--green)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.logout-btn{background:none;border:0.5px solid var(--border2);color:var(--text2);border-radius:var(--radius);padding:6px 12px;cursor:pointer;font-size:12px}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
+.sync-dot.off{background:var(--red)}
+.realtime-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--green);background:var(--green-bg);padding:3px 10px;border-radius:20px;border:0.5px solid var(--green-border)}
+.nav-tabs{display:flex;gap:4px;background:var(--surface2);border-radius:var(--radius-lg);padding:4px;margin-bottom:1.5rem}
+.nav-tab{flex:1;padding:8px;text-align:center;border-radius:var(--radius);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;transition:all .15s}
+.nav-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.main{padding:1.5rem;max-width:760px;margin:0 auto}
+.sec-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:10px;flex-wrap:wrap}
+.sec-header h3{font-size:18px;font-weight:700}
+.sec-header p{color:var(--text2);font-size:13px;margin-top:3px}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:1rem}
+.field-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.field-lbl{font-size:13px;color:var(--text2);width:130px;flex-shrink:0}
+.field-num{width:110px;padding:7px 10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none;text-align:right;transition:border-color .2s}
+.field-num:focus{border-color:var(--purple)}
+.field-sub{font-size:13px;color:var(--text2);margin-left:auto;min-width:80px;text-align:right}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:0.5px solid var(--border);margin-top:8px}
+.total-lbl{font-size:14px;font-weight:600}
+.total-val{font-size:22px;font-weight:700;color:var(--purple)}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-locked{background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-size:14px;color:var(--text2)}
+.fsel{width:100%;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none}
+.fta{width:100%;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none;resize:vertical;min-height:60px}
+.num-input{width:100%;padding:9px 14px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:15px;font-weight:600;outline:none;text-align:right;transition:border-color .2s}
+.num-input:focus{border-color:var(--purple)}
+.num-input.amber{border-color:var(--amber-border);color:var(--amber)}
+.alert{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:1rem;line-height:1.6}
+.alert-info{background:var(--blue-bg);color:var(--blue);border:0.5px solid var(--blue-border)}
+.alert-success{background:var(--green-bg);color:var(--green);border:0.5px solid var(--green-border)}
+.alert-danger{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border)}
+.alert-amber{background:var(--amber-bg);color:var(--amber);border:0.5px solid var(--amber-border)}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:.5rem;flex-wrap:wrap}
+.divider{height:0.5px;background:var(--border);margin:1rem 0}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.metric-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.metric{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px}
+.metric-lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.metric-val{font-size:24px;font-weight:700}
+.mv-purple{color:var(--purple)}.mv-red{color:var(--red)}.mv-green{color:var(--green)}.mv-amber{color:var(--amber)}
+.filter-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.tab-pills{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.tab-pill{padding:6px 14px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-weight:500}
+.tab-pill.active{background:var(--purple-glow);border-color:var(--purple);color:var(--purple)}
+.fg-sm label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+.fg-sm input[type=date]{padding:7px 10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:13px;outline:none}
+.corte-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden}
+.corte-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer;border-bottom:0.5px solid var(--border)}
+.corte-hdr:hover{background:var(--surface2)}
+.corte-title{font-size:14px;font-weight:600}
+.corte-meta{font-size:12px;color:var(--text2);margin-top:2px}
+.badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;white-space:nowrap}
+.badge-ok{background:var(--green-bg);color:var(--green)}
+.badge-bad{background:var(--red-bg);color:var(--red)}
+.badge-pend{background:var(--amber-bg);color:var(--amber)}
+.badge-off{background:var(--surface2);color:var(--text3)}
+.corte-body{display:none;padding:14px 16px}
+.corte-body.open{display:block}
+.cmp-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:0.5px solid var(--border)}
+.cmp-row:last-child{border-bottom:none}
+.cmp-lbl{color:var(--text2);flex-shrink:0;padding-right:10px}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.section-sep{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:12px 0 8px}
+.varianza-grande{text-align:center;padding:16px;border-radius:var(--radius);margin-top:10px;border:0.5px solid}
+.varianza-grande .lbl{font-size:12px;margin-bottom:4px}
+.varianza-grande .val{font-size:28px;font-weight:700}
+.sistema-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.sistema-field{background:var(--surface2);border-radius:var(--radius);padding:10px 12px}
+.sistema-field .sf-lbl{font-size:11px;color:var(--text3);margin-bottom:4px}
+.sistema-field .sf-val{font-size:15px;font-weight:600}
+.readonly-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);background:var(--surface2);padding:3px 10px;border-radius:20px;border:0.5px solid var(--border2)}
+/* USUARIOS */
+.user-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:0.5px solid var(--border);flex-wrap:wrap}
+.user-row:last-child{border-bottom:none}
+.user-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.user-info{flex:1;min-width:120px}
+.user-name{font-size:14px;font-weight:600}
+.user-meta{font-size:12px;color:var(--text2);margin-top:2px}
+.user-actions{display:flex;gap:6px;flex-wrap:wrap}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:1.25rem}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1rem}
+.pass-strength{height:3px;border-radius:2px;margin-top:5px;transition:all .3s;background:var(--border2)}
+
+/* PRINT */
+@media print{
+  body{background:#fff!important;color:#000!important;font-size:12px}
+  .topbar,.no-print,.modal-overlay{display:none!important}
+  .print-area{display:block!important}
+  .card{border:1px solid #ddd!important;background:#fff!important;break-inside:avoid}
+  .cmp-row{color:#000!important;border-bottom:1px solid #eee!important}
+  .cmp-lbl{color:#666!important}
+  .section-sep{color:#999!important}
+  .varianza-grande{border:2px solid #000!important}
+  .varianza-grande .val{color:#000!important}
+  .varianza-grande .lbl{color:#666!important}
+  .print-header{display:block!important;text-align:center;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #000}
+  .main{padding:0!important;max-width:100%!important}
+  .filter-bar,.tab-pills,.nav-tabs,.actions{display:none!important}
+  .corte-body{display:block!important}
+  .corte-hdr{cursor:default!important}
+}
+.print-header{display:none}
+
+@media(max-width:560px){.meta-grid,.metric-grid,.metric-grid-4,.sistema-row{grid-template-columns:1fr 1fr}.main{padding:1rem}.nav-tab{font-size:11px;padding:6px 4px}}
+@media(max-width:380px){
+  .metric-grid,.metric-grid-4{grid-template-columns:1fr}
+  .metric-val{font-size:20px}
+  .total-val{font-size:22px}
+  .nav-tab{font-size:10px;padding:8px 3px}
+}
+
+/* ── OPTIMIZACIÓN IPHONE / MÓVIL ── */
+@media(max-width:480px){
+  /* Login */
+  #login-screen{padding:1rem;align-items:flex-start;padding-top:3rem}
+  .login-card{padding:1.5rem 1.25rem}
+  .login-logo .diamond{width:36px;height:36px}
+  .login-logo h1{font-size:16px}
+
+  /* Topbar — reorganizar en 2 líneas */
+  .topbar{height:auto;padding:.5rem 1rem;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:100}
+  .topbar-left{gap:8px;flex:1}
+  .topbar h2{font-size:13px;white-space:nowrap}
+  .role-badge{font-size:10px;padding:2px 7px}
+  .topbar-right{gap:6px;width:100%;justify-content:flex-end;border-top:0.5px solid var(--border);padding-top:6px}
+  #topbar-user{font-size:11px;color:var(--text2)}
+  .realtime-badge{font-size:10px;padding:2px 7px}
+  .logout-btn{padding:5px 10px;font-size:11px}
+  .btn-xs.no-print{padding:5px 10px;font-size:11px}
+
+  /* Main content */
+  .main{padding:.75rem;max-width:100%}
+
+  /* Nav tabs admin */
+  .nav-tabs{gap:2px;padding:3px}
+  .nav-tab{padding:10px 6px;font-size:11px;min-height:44px;flex:1}
+
+  /* Métricas — 2 columnas completas sin desborde */
+  .metric-grid,.metric-grid-4{grid-template-columns:1fr 1fr!important;gap:8px}
+  .metric{padding:10px 8px;overflow:hidden}
+  .metric-val{font-size:22px}
+  .metric-lbl{font-size:9px;letter-spacing:0;line-height:1.3}
+
+  /* Cards */
+  .card{padding:.85rem;overflow:hidden}
+  .card-title{font-size:10px}
+
+  /* Filtros */
+  .tab-pills{gap:4px;flex-wrap:wrap}
+  .tab-pill{padding:8px 10px;font-size:11px;min-height:40px}
+  .filter-bar{padding:.75rem}
+
+  /* Corte cards */
+  .corte-card{overflow:hidden}
+  .corte-hdr{padding:12px}
+  .corte-title{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+  .corte-meta{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{font-size:10px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+
+  /* Botones */
+  .btn-xs{padding:8px 12px;font-size:12px;min-height:36px}
+  .btn-sm{padding:10px 16px;font-size:13px;min-height:44px}
+
+  /* Filas de comparación — evitar desborde */
+  .cmp-row{flex-wrap:wrap;gap:2px;padding:7px 0}
+  .cmp-row span:last-child{margin-left:auto;text-align:right;max-width:55%;word-break:break-all}
+  .cmp-lbl{font-size:12px;flex-shrink:0;max-width:45%}
+
+  /* Sección varianza */
+  .varianza-grande{padding:12px}
+  .varianza-grande .val{font-size:28px}
+
+  /* Acciones fondo */
+  .actions{flex-wrap:wrap;gap:8px}
+  .actions .btn{min-width:0;flex:1;text-align:center;justify-content:center;font-size:12px}
+
+  /* Últimas varianzas — texto no cortado */
+  .card .cmp-row{flex-direction:column;align-items:flex-start;gap:2px}
+  .card .cmp-row .cmp-lbl{max-width:100%;font-size:12px;color:var(--text2)}
+  .card .cmp-row span:last-child{margin-left:0;font-size:14px;font-weight:600}
+
+  /* Usuarios */
+  .user-row{flex-wrap:wrap;gap:8px}
+  .user-info{min-width:0;flex:1}
+  .user-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .user-meta{font-size:11px}
+  .user-actions{width:100%;justify-content:flex-end;gap:6px}
+
+  /* Modal */
+  .modal{padding:1.25rem;margin:.5rem}
+  .modal-title{font-size:15px}
+
+  /* Inputs — 16px evita zoom en Safari */
+  .fg input,.fg select{padding:12px 14px;font-size:16px}
+  .fsel{padding:12px;font-size:16px}
+  .fta{font-size:16px}
+  .num-input{font-size:16px;padding:12px 14px}
+  .field-num{font-size:16px;padding:10px;width:90px}
+  .field-lbl{font-size:12px;width:110px}
+
+  /* Sección sep */
+  .section-sep{margin:10px 0 6px}
+
+  /* Sistema row */
+  .sistema-row{grid-template-columns:1fr 1fr;gap:6px}
+  .sistema-field .sf-lbl{font-size:10px}
+  .sistema-field .sf-val{font-size:13px}
+
+  /* Evitar scroll horizontal */
+  body{overflow-x:hidden}
+  .corte-body{overflow:hidden}
+
+  /* Grids que se salen — forzar una columna */
+  .meta-grid,.meta-grid-3,.sistema-row{grid-template-columns:1fr!important}
+
+  /* Field rows — apilar vertical */
+  .field-row{flex-wrap:wrap;gap:6px}
+  .field-row .field-lbl{width:100%!important;margin-bottom:0}
+  .field-row .field-num{width:100%!important;max-width:100%}
+  .field-row .field-sub{width:100%;text-align:right;margin-left:0}
+
+  /* Inputs de tipo number — ancho completo */
+  input[type=number]{width:100%!important;max-width:100%!important;box-sizing:border-box}
+
+  /* Recuadro total */
+  .total-row{flex-wrap:wrap;gap:4px}
+  .total-val{font-size:26px}
+
+  /* Topbar compacto */
+  .topbar-right .realtime-badge{display:none}
+
+  /* Botón 🔑 */
+  .btn-xs{min-width:36px;min-height:36px}
+
+  /* Tab pills — scroll horizontal en lugar de wrap */
+  .tab-pills{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .tab-pill{flex-shrink:0;white-space:nowrap}
+
+  /* Varianza grande */
+  .varianza-grande .val{font-size:32px}
+
+  /* Acciones — botones apilados */
+  .actions{flex-direction:column;align-items:stretch}
+  .actions .btn,.actions button{width:100%!important;text-align:center;justify-content:center}
+
+  /* User actions — botones más grandes */
+  .user-actions .btn-xs{padding:10px 14px;font-size:13px}
+
+  /* Sec header — apilar */
+  .sec-header{flex-direction:column;gap:8px}
+  .sec-header>div:last-child{width:100%}
+  .sec-header>div:last-child .btn{width:100%!important;justify-content:center}
+
+  /* Cards de corte */
+  .corte-hdr{flex-wrap:wrap;gap:6px;align-items:flex-start}
+  .corte-hdr .badge{margin-top:4px}
+  .corte-title{max-width:100%!important;white-space:normal}
+
+  /* Login card */
+  .login-card{margin:0}
+
+  /* Evitar que inline styles rompan el layout */
+  [style*="display:flex"]{flex-wrap:wrap!important}
+  [style*="gap:8px"]{gap:6px!important}
+}
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:#5e5c78">Conectando con Casino Tique...</div>
+</div>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><div style="width:70px;height:70px;border-radius:50%;border:2px solid #C9A84C;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;background:rgba(201,168,76,0.1)"><span style="font-size:28px">🎰</span></div><h1>Casino Tique</h1><p>Sistema de cortes de caja</p></div>
+    <div class="fg"><label>Usuario</label><input type="text" id="login-user" placeholder="Tu nombre de usuario" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="login-error"></div>
+    <div style="margin-top:1rem;padding:10px;background:var(--surface2);border-radius:var(--radius);font-size:12px;color:var(--text3);text-align:center">Primera vez: usa la contraseña temporal que te asignó el administrador</div>
+  </div>
+</div>
+
+<div id="change-pass-screen">
+  <div class="login-card">
+    <div class="login-logo"><div style="width:70px;height:70px;border-radius:50%;border:2px solid #C9A84C;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;background:rgba(201,168,76,0.1)"><span style="font-size:28px">🎰</span></div><h1>Nueva contraseña</h1><p>Crea tu contraseña personal para continuar</p></div>
+    <div class="alert alert-amber">Por seguridad debes cambiar la contraseña temporal antes de acceder.</div>
+    <div class="fg"><label>Nueva contraseña</label><input type="password" id="new-pass1" placeholder="Mínimo 6 caracteres" oninput="checkPassStrength()">
+      <div class="pass-strength" id="pass-strength-bar" style="width:0%"></div></div>
+    <div class="fg"><label>Confirmar contraseña</label><input type="password" id="new-pass2" onkeydown="if(event.key==='Enter')cambiarPass()"></div>
+    <button class="btn btn-primary" onclick="cambiarPass()">Guardar y entrar</button>
+    <div class="login-error" id="change-pass-error"></div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="topbar no-print">
+    <div class="topbar-left">
+      <div style="width:28px;height:28px;border-radius:50%;border:1.5px solid #C9A84C;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,0.15);font-size:14px;flex-shrink:0">🎰</div>
+      <h2>Casino Tique</h2>
+      <span class="role-badge" id="topbar-role">—</span>
+    </div>
+    <div class="topbar-right">
+      <span class="realtime-badge"><span class="sync-dot" id="sync-dot"></span><span id="sync-txt">En línea</span></span>
+      <span style="font-size:12px;color:var(--text2)" id="topbar-user">—</span>
+      <button class="btn btn-xs btn-outline" onclick="showMyPassModal()">🔑</button>
+      <button class="logout-btn" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+  <div class="main" id="main-content"></div>
+</div>
+
+<!-- MODAL mi contraseña -->
+<div class="modal-overlay" id="modal-mypass">
+  <div class="modal">
+    <div class="modal-title">Cambiar mi contraseña</div>
+    <div class="fg"><label>Contraseña actual</label><input type="password" id="mp-actual"></div>
+    <div class="fg"><label>Nueva contraseña</label><input type="password" id="mp-nueva1" placeholder="Mínimo 6 caracteres"></div>
+    <div class="fg"><label>Confirmar nueva</label><input type="password" id="mp-nueva2"></div>
+    <div id="mp-msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-mypass')">Cancelar</button>
+      <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="guardarMiPass()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL usuario -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <div class="modal-title" id="modal-usr-title">Nuevo usuario</div>
+    <div class="fg"><label>Nombre completo</label><input type="text" id="usr-nombre" placeholder="Ej: María López"></div>
+    <div class="fg"><label>Usuario (para iniciar sesión)</label><input type="text" id="usr-username" placeholder="Ej: maria.lopez"></div>
+    <div class="fg"><label>Rol</label>
+      <select id="usr-rol">
+        <option value="cajera">Cajera</option>
+        <option value="bovedista">Bovedista</option>
+        <option value="supervisor">Supervisor (solo lectura)</option>
+        <option value="gerente">Gerente</option>
+        <option value="admin">Administrador</option>
+      </select>
+    </div>
+    <div class="fg" id="usr-pass-group"><label>Contraseña temporal</label>
+      <input type="text" id="usr-pass" placeholder="Ej: Casino2024">
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">El usuario deberá cambiarla en su primer inicio de sesión.</div>
+    </div>
+    <div id="modal-usr-msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-usuario')">Cancelar</button>
+      <button class="btn btn-sm" style="background:var(--purple);color:#fff" id="modal-usr-btn" onclick="guardarUsuario()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, getDoc, setDoc, getDocs, query, orderBy, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+const firebaseConfig={apiKey:"AIzaSyD0NVexMs1CDyKHzust-1c4uZ44Uz75Ubk",authDomain:"casino-tique.firebaseapp.com",projectId:"casino-tique",storageBucket:"casino-tique.firebasestorage.app",messagingSenderId:"22489931308",appId:"1:22489931308:web:2a45d7e4687d70ee403b89"};
+const app=initializeApp(firebaseConfig),db=getFirestore(app);
+
+const ROLE_LBL={admin:'Administrador',cajera:'Cajera',bovedista:'Bovedista',supervisor:'Supervisor',gerente:'Gerente'};
+const ROLE_CSS={admin:'role-admin',cajera:'role-cajera',bovedista:'role-bovedista',supervisor:'role-supervisor',gerente:'role-gerente'};
+const ROLE_COLOR={admin:'#ff8080',cajera:'var(--blue)',bovedista:'var(--amber)',supervisor:'var(--purple)',gerente:'var(--green)'};
+const DENOMS=[{val:1000,lbl:'$1,000'},{val:500,lbl:'$500'},{val:200,lbl:'$200'},{val:100,lbl:'$100'},{val:50,lbl:'$50'},{val:20,lbl:'$20'},{val:10,lbl:'$10'},{val:5,lbl:'$5'},{val:2,lbl:'$2'},{val:1,lbl:'$1'},{val:.50,lbl:'$0.50'}];
+
+let currentUser=null,cortesCache=[],usuariosCache=[],unsubscribe=null;
+let filtroTipo='hoy',filtroDia=hoy(),filtroDesde=hoy(),filtroHasta=hoy(),filtroCajera='',filtroEstado='';
+let editingUserId=null,adminTab='resumen',gerenteTab='cortes';
+
+function fmt(n){return'$'+Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+function hoy(){return new Date().toISOString().slice(0,10)}
+function isoDate(d){
+  if(!d)return hoy();
+  const dt=d.toDate?d.toDate():new Date(d);
+  // Usar fecha local (no UTC) para que coincida con lo que ve el usuario
+  const y=dt.getFullYear();
+  const m=String(dt.getMonth()+1).padStart(2,'0');
+  const dia=String(dt.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dia}`;
+}
+function fmtTs(d){if(!d)return'—';const dt=d.toDate?d.toDate():new Date(d);return dt.toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+function nv(id){return parseFloat(document.getElementById(id)?.value)||0}
+function setSyncStatus(ok){const dot=document.getElementById('sync-dot'),txt=document.getElementById('sync-txt');if(dot)dot.className='sync-dot'+(ok?'':' off');if(txt)txt.textContent=ok?'En línea':'Sin conexión';}
+
+// ── INIT ──────────────────────────────────────────────────────
+async function arrancar(){
+  const adminRef=doc(db,'usuarios','admin');
+  const snap=await getDoc(adminRef);
+  if(!snap.exists()) await setDoc(adminRef,{nombre:'Hugo Esquer',username:'admin',rol:'admin',pass:'Admin2024',primerAcceso:true,activo:true,createdAt:serverTimestamp()});
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+arrancar();
+
+// ── LOGIN ─────────────────────────────────────────────────────
+window.doLogin=async function(){
+  const username=document.getElementById('login-user').value.trim().toLowerCase();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  if(!username||!pass){err.style.display='block';err.textContent='Ingresa usuario y contraseña.';return}
+  const snap=await getDocs(collection(db,'usuarios'));
+  let userData=null,userId=null;
+  snap.forEach(d=>{const u=d.data();if(u.username?.toLowerCase()===username&&u.pass===pass&&u.activo!==false){userData=u;userId=d.id;}});
+  if(!userData){err.style.display='block';err.textContent='Usuario o contraseña incorrectos.';return}
+  err.style.display='none';
+  currentUser={id:userId,...userData};
+  if(userData.primerAcceso){document.getElementById('login-screen').style.display='none';document.getElementById('change-pass-screen').style.display='flex';return;}
+  entrarAlSistema();
+}
+window.checkPassStrength=function(){
+  const p=document.getElementById('new-pass1')?.value||'',bar=document.getElementById('pass-strength-bar');if(!bar)return;
+  const s=p.length>=8&&/[A-Z]/.test(p)&&/[0-9]/.test(p)?100:p.length>=6?60:p.length>=3?30:0;
+  bar.style.width=s+'%';bar.style.background=s>=100?'var(--green)':s>=60?'var(--amber)':'var(--red)';
+}
+window.cambiarPass=async function(){
+  const p1=document.getElementById('new-pass1').value,p2=document.getElementById('new-pass2').value;
+  const err=document.getElementById('change-pass-error');
+  if(p1.length<6){err.style.display='block';err.textContent='Mínimo 6 caracteres.';return}
+  if(p1!==p2){err.style.display='block';err.textContent='No coinciden.';return}
+  await updateDoc(doc(db,'usuarios',currentUser.id),{pass:p1,primerAcceso:false});
+  currentUser.pass=p1;currentUser.primerAcceso=false;
+  document.getElementById('change-pass-screen').style.display='none';entrarAlSistema();
+}
+function entrarAlSistema(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('change-pass-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  document.getElementById('topbar-user').textContent=currentUser.nombre;
+  const rb=document.getElementById('topbar-role');rb.textContent=ROLE_LBL[currentUser.rol];rb.className='role-badge '+ROLE_CSS[currentUser.rol];
+  conectar();renderMain();
+}
+window.doLogout=function(){
+  if(unsubscribe){unsubscribe();unsubscribe=null;}
+  currentUser=null;cortesCache=[];usuariosCache=[];
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-pass').value='';document.getElementById('login-user').value='';
+}
+window.showMyPassModal=function(){['mp-actual','mp-nueva1','mp-nueva2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('mp-msg').innerHTML='';document.getElementById('modal-mypass').classList.add('open');}
+window.closeModal=function(id){document.getElementById(id).classList.remove('open')}
+window.guardarMiPass=async function(){
+  const actual=document.getElementById('mp-actual').value,n1=document.getElementById('mp-nueva1').value,n2=document.getElementById('mp-nueva2').value,msg=document.getElementById('mp-msg');
+  if(actual!==currentUser.pass){msg.innerHTML='<div class="alert alert-danger">Contraseña actual incorrecta.</div>';return}
+  if(n1.length<6){msg.innerHTML='<div class="alert alert-danger">Mínimo 6 caracteres.</div>';return}
+  if(n1!==n2){msg.innerHTML='<div class="alert alert-danger">No coinciden.</div>';return}
+  await updateDoc(doc(db,'usuarios',currentUser.id),{pass:n1});currentUser.pass=n1;
+  msg.innerHTML='<div class="alert alert-success">✓ Contraseña actualizada.</div>';
+  setTimeout(()=>closeModal('modal-mypass'),1500);
+}
+
+// ── FIREBASE ──────────────────────────────────────────────────
+function conectar(){
+  if(unsubscribe)unsubscribe();
+  unsubscribe=onSnapshot(query(collection(db,'cortes'),orderBy('fecha','desc')),
+    snap=>{cortesCache=snap.docs.map(d=>({id:d.id,...d.data()}));setSyncStatus(true);
+      if(currentUser?.rol==='cajera') renderCajera();
+      if(currentUser?.rol==='bovedista') renderBovedista();
+      if(['supervisor','gerente','admin'].includes(currentUser?.rol)) refrescarCortes();
+    },()=>setSyncStatus(false));
+}
+function renderMain(){
+  const r=currentUser.rol;
+  if(r==='admin') renderAdmin();
+  else if(r==='cajera') renderCajera();
+  else if(r==='bovedista') renderBovedista();
+  else if(r==='gerente') renderGerente();
+  else renderVistaCortes(); // supervisor
+}
+
+// ══════════════════════════════════════════════════════════════
+// CAJERA — captura billetes; ve historial propio
+// ══════════════════════════════════════════════════════════════
+function renderCajera(){
+  // Buscar corte propio PENDIENTE (aún no confirmado por bovedista)
+  const miCortePendiente=cortesCache.find(c=>c.cajera_id===currentUser.id&&c.estado==='pendiente');
+  // Historial de cortes propios completados
+  const misCortes=cortesCache.filter(c=>c.cajera_id===currentUser.id&&c.estado==='completo');
+  const mc=document.getElementById('main-content');
+
+  if(miCortePendiente){
+    // Tiene un corte pendiente → mostrar espera, no puede capturar otro hasta que se selle
+    mc.innerHTML=`
+      <div class="sec-header"><div><h3>Mi corte de turno</h3><p>Turno ${miCortePendiente.turno==='matutino'?'Matutino':'Vespertino'}</p></div></div>
+      <div class="alert alert-success">✓ Tu corte fue enviado el ${fmtTs(miCortePendiente.fecha)}. Esperando confirmación de la bovedista...</div>
+      <div class="card">
+        <div class="card-title">Lo que capturaste</div>
+        <div class="cmp-row"><span class="cmp-lbl">Efectivo declarado</span><span style="font-weight:700;font-size:18px;color:var(--purple)">${fmt(miCortePendiente.totalEfectivo)}</span></div>
+        ${(miCortePendiente.totalTarjetas>0)?`<div class="cmp-row"><span class="cmp-lbl">Tarjetas declaradas</span><span style="font-weight:700;color:var(--purple)">${fmt(miCortePendiente.totalTarjetas)}</span></div>`:''}
+        ${(miCortePendiente.totalManuales>0)?`<div class="cmp-row"><span class="cmp-lbl">Pagos manuales</span><span style="font-weight:700;color:var(--purple)">${fmt(miCortePendiente.totalManuales)}</span></div>`:''}
+        <div class="cmp-row"><span class="cmp-lbl">Total general</span><span style="font-weight:700;font-size:18px;color:var(--purple)">${fmt(miCortePendiente.totalGeneral||miCortePendiente.totalEfectivo)}</span></div>
+        ${miCortePendiente.obs_cajera?`<div class="cmp-row"><span class="cmp-lbl">Notas</span><span>${miCortePendiente.obs_cajera}</span></div>`:''}
+      </div>
+      <div class="alert alert-info">Cuando la bovedista complete su captura podrás ver el resumen completo aquí y capturar un nuevo turno.</div>
+      ${misCortes.length>0?renderHistorialCajera(misCortes):''}`;
+    return;
+  }
+
+  // No tiene corte pendiente → puede capturar uno nuevo
+  mc.innerHTML=`
+    <div class="sec-header"><div><h3>Mi corte de turno</h3><p>Cuenta tus billetes y envía antes de ir a bóveda.</p></div></div>
+    <div class="alert alert-info">🔒 Registra los billetes que tienes en caja. El registro queda sellado al enviarlo.</div>
+    <div class="card">
+      <div class="card-title">Datos del turno</div>
+      <div class="meta-grid">
+        <div><div style="font-size:12px;color:var(--text2);margin-bottom:6px">Cajera</div><div class="field-locked">👤 ${currentUser.nombre}</div></div>
+        <div><div style="font-size:12px;color:var(--text2);margin-bottom:6px">Turno</div>
+          <select class="fsel" id="caj-turno"><option value="matutino">Matutino (10:00 – 18:00)</option><option value="vespertino">Vespertino (18:00 – 02:00)</option></select></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Efectivo en pesos</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Captura el total de billetes y monedas en pesos.</div>
+      <div class="field-row">
+        <span class="field-lbl">Total efectivo</span>
+        <input type="number" class="field-num" id="caj-efectivo-total" min="0" step="0.01" value="0" oninput="recalcCaj()" style="width:100%;max-width:220px">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Ventas con tarjeta de crédito</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Captura el total de las ventas cobradas con tarjeta durante el turno.</div>
+      <div class="field-row">
+        <span class="field-lbl">Total tarjetas</span>
+        <input type="number" class="field-num" id="caj-tarjetas" min="0" step="0.01" value="0" oninput="recalcCaj()" style="width:140px">
+        <span class="field-sub" id="caj-tarjetas-sub">$0.00</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Pagos manuales</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Pagos recibidos fuera del sistema normal (vales, cortesías, otros).</div>
+      <div class="field-row">
+        <span class="field-lbl">Total manuales</span>
+        <input type="number" class="field-num" id="caj-manuales" min="0" step="0.01" value="0" oninput="recalcCaj()" style="width:140px">
+        <span class="field-sub" id="caj-manuales-sub">$0.00</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Dólares recibidos</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Captura los dólares y el tipo de cambio para convertirlos a pesos automáticamente.</div>
+      <div class="field-row">
+        <span class="field-lbl">Cantidad USD</span>
+        <input type="number" class="field-num" id="caj-dolares" min="0" step="0.01" value="0" oninput="recalcCaj()" style="width:140px">
+        <span class="field-sub" style="color:var(--blue)">USD</span>
+      </div>
+      <div class="field-row">
+        <span class="field-lbl">Tipo de cambio</span>
+        <input type="number" class="field-num" id="caj-tipocambio" min="0" step="0.01" value="0" oninput="recalcCaj()" style="width:140px">
+        <span class="field-sub" style="color:var(--text2)">$/USD</span>
+      </div>
+      <div class="field-row" style="margin-top:4px;padding-top:8px;border-top:0.5px solid var(--border)">
+        <span class="field-lbl" style="color:var(--blue)">Total en pesos</span>
+        <span id="caj-dolares-pesos" style="font-size:15px;font-weight:700;color:var(--blue);margin-left:auto">$0.00</span>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--purple);background:var(--purple-glow)">
+      <div class="total-row" style="border:none;padding:0;margin:0">
+        <span class="total-lbl">Total a entregar<br><span style="font-size:11px;font-weight:400;color:var(--text2)">(Efectivo + Tarjetas + Manuales + Dólares)</span></span>
+        <span class="total-val" id="total-caj">$0.00</span>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Observaciones</div>
+      <textarea class="fta" id="caj-obs" placeholder="Notas (opcional)..."></textarea></div>
+    <div class="actions no-print">
+      <button class="btn btn-outline btn-sm" onclick="limpiarCaj()">Limpiar</button>
+      <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="enviarCorteCajera()">Enviar corte ✓</button>
+    </div>
+    <div id="msg-caj" style="margin-top:12px"></div>
+    ${misCortes.length>0?renderHistorialCajera(misCortes):''}`;
+}
+
+function renderHistorialCajera(misCortes){
+  return`<div class="card" style="margin-top:1.5rem">
+    <div class="card-title">Mis cortes anteriores</div>
+    ${misCortes.slice(0,10).map(c=>{
+      const ev=c.estado_varianza;
+      const badge=ev==='ok'?'<span class="badge badge-ok">Sin varianza</span>':ev==='faltante'?'<span class="badge badge-bad">⚠ Varianza</span>':'<span class="badge badge-ok">Sobrante</span>';
+      return`<div class="corte-card" style="margin-bottom:8px">
+        <div class="corte-hdr" onclick="toggleC('hist-${c.id}')">
+          <div><div class="corte-title">${c.turno==='matutino'?'Matutino':'Vespertino'} · ${fmtTs(c.fecha)}</div>
+            <div class="corte-meta">Efectivo: ${fmt(c.totalEfectivo)}${c.totalTarjetas>0?' · Tarjetas: '+fmt(c.totalTarjetas):''} · Total: ${fmt(c.totalGeneral||c.totalEfectivo)} · Varianza: ${fmt(c.varianza)}</div></div>
+          ${badge}
+        </div>
+        <div class="corte-body" id="cb-hist-${c.id}">
+          <div class="section-sep">Mi registro</div>
+          <div class="cmp-row"><span class="cmp-lbl">Efectivo</span><span style="font-weight:600">${fmt(c.totalEfectivo)}</span></div>
+          ${(c.totalTarjetas>0)?`<div class="cmp-row"><span class="cmp-lbl">Tarjetas</span><span style="font-weight:600">${fmt(c.totalTarjetas)}</span></div>`:''}
+          ${(c.totalManuales>0)?`<div class="cmp-row"><span class="cmp-lbl">Pagos manuales</span><span style="font-weight:600">${fmt(c.totalManuales)}</span></div>`:''}
+          ${(c.totalDolares>0)?`<div class="cmp-row"><span class="cmp-lbl" style="color:var(--blue)">Dólares</span><span style="color:var(--blue);font-weight:600">${c.totalDolares} USD × ${fmt(c.tipoCambio)} = ${fmt(c.totalDolaresPesos)}</span></div>`:''}
+          <div class="cmp-row"><span class="cmp-lbl" style="color:var(--purple)">Total general</span><span style="font-weight:700;color:var(--purple)">${fmt(c.totalGeneral||c.totalEfectivo)}</span></div>
+          ${c.obs_cajera?`<div class="cmp-row"><span class="cmp-lbl">Notas</span><span>${c.obs_cajera}</span></div>`:''}
+          <div class="divider"></div>
+          <div class="section-sep">Registro bovedista</div>
+          <div class="cmp-row"><span class="cmp-lbl">Bovedista</span><span>${c.bov_nombre}</span></div>
+          <div class="cmp-row"><span class="cmp-lbl">Hora recibo</span><span>${fmtTs(c.fecha_bov)}</span></div>
+          <div class="cmp-row"><span class="cmp-lbl" style="color:var(--amber)">Balance sistema</span><span style="color:var(--amber);font-weight:700">${fmt(c.sys_balance)}</span></div>
+          <div class="cmp-row"><span class="cmp-lbl">Efectivo recibido</span><span style="font-weight:700">${fmt(c.bov_efectivoRecibido)}</span></div>
+          ${c.obs_bov?`<div class="cmp-row"><span class="cmp-lbl">Notas bovedista</span><span>${c.obs_bov}</span></div>`:''}
+          <div class="varianza-grande" style="border-color:${ev==='ok'?'var(--green-border)':ev==='faltante'?'var(--red-border)':'var(--blue-border)'};background:${ev==='ok'?'var(--green-bg)':ev==='faltante'?'var(--red-bg)':'var(--blue-bg)'}">
+            <div class="lbl" style="color:${ev==='ok'?'var(--green)':ev==='faltante'?'var(--red)':'var(--blue)'}">Varianza</div>
+            <div class="val" style="color:${ev==='ok'?'var(--green)':ev==='faltante'?'var(--red)':'var(--blue)'}">${fmt(c.varianza)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+
+function buildBilCaj(){
+  const c=document.getElementById('billetes-caj');if(!c)return;c.innerHTML='';
+  DENOMS.forEach((d,i)=>{const r=document.createElement('div');r.className='field-row';r.innerHTML=`<span class="field-lbl">${d.lbl}</span><input type="number" class="field-num" id="cb-${i}" min="0" step="1" value="0" oninput="recalcCaj()"><span class="field-sub" id="cs-${i}">$0.00</span>`;c.appendChild(r);});
+}
+window.recalcCaj=function(){
+  const efectivo=parseFloat(document.getElementById('caj-efectivo-total')?.value)||0;
+  const tarjetas=parseFloat(document.getElementById('caj-tarjetas')?.value)||0;
+  const manuales=parseFloat(document.getElementById('caj-manuales')?.value)||0;
+  const dolares=parseFloat(document.getElementById('caj-dolares')?.value)||0;
+  const tipoCambio=parseFloat(document.getElementById('caj-tipocambio')?.value)||0;
+  const dolaresPesos=dolares*tipoCambio;
+  const ts=document.getElementById('caj-tarjetas-sub');if(ts)ts.textContent=fmt(tarjetas);
+  const ms=document.getElementById('caj-manuales-sub');if(ms)ms.textContent=fmt(manuales);
+  const dp=document.getElementById('caj-dolares-pesos');if(dp)dp.textContent=fmt(dolaresPesos);
+  const total=efectivo+tarjetas+manuales+dolaresPesos;
+  const tv=document.getElementById('total-caj');if(tv)tv.textContent=fmt(total);
+  return {efectivo,tarjetas,manuales,dolares,tipoCambio,dolaresPesos,total};
+}
+window.limpiarCaj=function(){
+  const ef=document.getElementById('caj-efectivo-total');if(ef)ef.value=0;
+  const tv=document.getElementById('total-caj');if(tv)tv.textContent='$0.00';
+  const ct=document.getElementById('caj-tarjetas');if(ct)ct.value=0;
+  const ts=document.getElementById('caj-tarjetas-sub');if(ts)ts.textContent='$0.00';
+  const cm=document.getElementById('caj-manuales');if(cm)cm.value=0;
+  const ms=document.getElementById('caj-manuales-sub');if(ms)ms.textContent='$0.00';
+  const cd=document.getElementById('caj-dolares');if(cd)cd.value=0;
+  const ctc=document.getElementById('caj-tipocambio');if(ctc)ctc.value=0;
+  const dp=document.getElementById('caj-dolares-pesos');if(dp)dp.textContent='$0.00';
+}
+window.enviarCorteCajera=async function(){
+  const turno=document.getElementById('caj-turno').value;
+  const {efectivo,tarjetas,manuales,dolares,tipoCambio,dolaresPesos,total}=recalcCaj();
+  if(total<=0){document.getElementById('msg-caj').innerHTML='<div class="alert alert-danger">Captura al menos un billete, tarjeta o pago manual.</div>';return}
+  const btn=document.querySelector('[onclick="enviarCorteCajera()"]');if(btn){btn.disabled=true;btn.textContent='Guardando...'}
+  const billetes=[];//ya no se usa desglose de billetes
+
+  // Calcular fecha del turno — si es vespertino y son las 12am-5am pertenece al día anterior
+  const ahora=new Date();
+  let fechaTurno=new Date(ahora);
+  if(turno==='vespertino' && ahora.getHours()>=0 && ahora.getHours()<=5){
+    fechaTurno.setDate(fechaTurno.getDate()-1);
+  }
+  const fechaTurnoStr=`${fechaTurno.getFullYear()}-${String(fechaTurno.getMonth()+1).padStart(2,'0')}-${String(fechaTurno.getDate()).padStart(2,'0')}`;
+
+  try{
+    await addDoc(collection(db,'cortes'),{
+      cajera:currentUser.nombre,cajera_id:currentUser.id,turno,
+      fecha:serverTimestamp(),
+      fechaTurno:fechaTurnoStr, // fecha del turno (no de cierre)
+      billetes,
+      totalEfectivo:efectivo,
+      totalTarjetas:tarjetas,
+      totalManuales:manuales,
+      totalDolares:dolares,
+      tipoCambio:tipoCambio,
+      totalDolaresPesos:dolaresPesos,
+      totalGeneral:total,
+      obs_cajera:document.getElementById('caj-obs')?.value||'',
+      estado:'pendiente',
+      numTurno:null,montoApertura:null,sys_efectivo:null,sys_tarjetas:null,
+      sys_pagosManuales:null,sys_jackpots:null,sys_balance:null,
+      bov_efectivoRecibido:null,bov_nombre:null,obs_bov:null,
+      fecha_bov:null,varianza:null,estado_varianza:null
+    });
+    document.getElementById('msg-caj').innerHTML='<div class="alert alert-success">✓ Corte enviado. Lleva el dinero a bóveda — la bovedista ya puede verlo.</div>';
+    limpiarCaj();document.getElementById('caj-obs').value='';
+  }catch(e){document.getElementById('msg-caj').innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>';}
+  if(btn){btn.disabled=false;btn.textContent='Enviar corte ✓'}
+}
+
+// ══════════════════════════════════════════════════════════════
+// BOVEDISTA — elige cajera, captura sin ver lo que puso cajera
+// ══════════════════════════════════════════════════════════════
+function renderBovedista(){
+  const pend=cortesCache.filter(c=>c.estado==='pendiente');
+  document.getElementById('main-content').innerHTML=`
+    <div class="sec-header">
+      <div><h3>Captura de corte</h3><p>Selecciona la cajera y captura los datos del sistema.</p></div>
+      <span class="realtime-badge"><span class="sync-dot"></span> Tiempo real</span>
+    </div>
+    ${pend.length===0
+      ?'<div class="alert alert-info">No hay cortes pendientes. Aparecerán aquí automáticamente cuando la cajera envíe el suyo.</div>'
+      :`<div class="card"><div class="card-title">Seleccionar cajera</div>
+        <select class="fsel" id="bov-sel" onchange="cargarBov()">
+          <option value="">— Elige la cajera a recibir —</option>
+          ${pend.map(c=>`<option value="${c.id}">${c.cajera} | ${c.turno==='matutino'?'Matutino':'Vespertino'} | ${fmtTs(c.fecha)}</option>`).join('')}
+        </select></div>
+        <div id="bov-area"></div>`}`;
+}
+
+window.cargarBov=function(){
+  const id=document.getElementById('bov-sel')?.value,area=document.getElementById('bov-area');
+  if(!id||!area){if(area)area.innerHTML='';return}
+  // IMPORTANTE: NO mostramos lo que capturó la cajera
+  area.innerHTML=`
+    <div class="alert alert-amber">⚠️ Captura los datos del sistema de máquinas y el efectivo que recibes físicamente. No podrás modificar este registro una vez sellado.</div>
+    <div class="card"><div class="card-title">Datos del sistema de máquinas</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Copia los valores de la pantalla "Corrección de Turnos".</div>
+      <div class="meta-grid" style="margin-bottom:10px">
+        <div><div style="font-size:12px;color:var(--text2);margin-bottom:5px">Número de turno</div>
+          <input class="num-input" type="number" id="bov-numturno" placeholder="32448"></div>
+        <div><div style="font-size:12px;color:var(--text2);margin-bottom:5px">Monto de apertura</div>
+          <input class="num-input" type="number" id="bov-apertura" placeholder="15000.00" step="0.01" oninput="calcVarianza()"></div>
+      </div>
+      <div class="section-sep">Columna derecha del sistema</div>
+      <div class="sistema-row">
+        <div class="sistema-field"><div class="sf-lbl">Efectivo</div><input class="num-input" type="number" id="bov-sys-efectivo" placeholder="0.00" step="0.01" oninput="calcBalance()"></div>
+        <div class="sistema-field"><div class="sf-lbl">Tarjetas de crédito</div><input class="num-input" type="number" id="bov-sys-tarjetas" placeholder="0.00" step="0.01" oninput="calcBalance()"></div>
+        <div class="sistema-field"><div class="sf-lbl">Pagos manuales</div><input class="num-input" type="number" id="bov-sys-manuales" placeholder="0.00" step="0.01" oninput="calcBalance()"></div>
+        <div class="sistema-field"><div class="sf-lbl">Jackpots</div><input class="num-input" type="number" id="bov-sys-jackpots" placeholder="0.00" step="0.01" oninput="calcBalance()"></div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:12px;color:var(--amber);margin-bottom:5px;font-weight:600">Balance del sistema — lo que debe entregar la cajera</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input class="num-input amber" type="number" id="bov-balance" placeholder="0.00" step="0.01" oninput="calcVarianza()" style="flex:1">
+          <span style="font-size:11px;color:var(--text3);white-space:nowrap">Se calcula solo ↑</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Suma automática de los 4 campos. Puedes ajustarlo manualmente si el sistema muestra un valor diferente.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Efectivo recibido en pesos</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Captura el total de billetes y monedas en pesos que recibes.</div>
+      <div class="field-row">
+        <span class="field-lbl">Total efectivo</span>
+        <input type="number" class="field-num" id="bov-efectivo-total" min="0" step="0.01" value="0" oninput="recalcBov()" style="width:100%;max-width:220px">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Otros conceptos recibidos</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Captura los pagos con tarjeta y manuales que entrega la cajera.</div>
+      <div class="field-row">
+        <span class="field-lbl">Tarjetas de crédito</span>
+        <input type="number" class="field-num" id="bov-rec-tarjetas" min="0" step="0.01" value="0" oninput="recalcBov()" style="width:140px">
+        <span class="field-sub" id="bov-rec-tarjetas-sub">$0.00</span>
+      </div>
+      <div class="field-row">
+        <span class="field-lbl">Pagos manuales</span>
+        <input type="number" class="field-num" id="bov-rec-manuales" min="0" step="0.01" value="0" oninput="recalcBov()" style="width:140px">
+        <span class="field-sub" id="bov-rec-manuales-sub">$0.00</span>
+      </div>
+      <div style="height:0.5px;background:var(--border);margin:10px 0"></div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600">Dólares recibidos</div>
+      <div class="field-row">
+        <span class="field-lbl">Cantidad USD</span>
+        <input type="number" class="field-num" id="bov-dolares" min="0" step="0.01" value="0" oninput="recalcBov()" style="width:140px">
+        <span class="field-sub" style="color:var(--blue)">USD</span>
+      </div>
+      <div class="field-row">
+        <span class="field-lbl">Tipo de cambio</span>
+        <input type="number" class="field-num" id="bov-tipocambio" min="0" step="0.01" value="0" oninput="recalcBov()" style="width:140px">
+        <span class="field-sub" style="color:var(--text2)">$/USD</span>
+      </div>
+      <div class="field-row" style="margin-top:4px;padding-top:8px;border-top:0.5px solid var(--border)">
+        <span class="field-lbl" style="color:var(--blue)">Total en pesos</span>
+        <span id="bov-dolares-pesos" style="font-size:15px;font-weight:700;color:var(--blue);margin-left:auto">$0.00</span>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--purple);background:var(--purple-glow)">
+      <div class="total-row" style="border:none;padding:0;margin:0">
+        <span class="total-lbl">Total recibido<br><span style="font-size:11px;font-weight:400;color:var(--text2)">(Efectivo + Tarjetas + Manuales + Dólares)</span></span>
+        <span class="total-val" id="total-bov">$0.00</span>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Observaciones</div>
+      <textarea class="fta" id="bov-obs" placeholder="Notas del recibo..."></textarea></div>
+    <div class="actions">
+      <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="confirmarBov('${id}')">Sellar registro ✓</button>
+    </div>
+    <div id="msg-bov" style="margin-top:12px"></div>`;
+}
+
+function buildBilBov(){}
+window.recalcBov=function(){
+  const efectivo=parseFloat(document.getElementById('bov-efectivo-total')?.value)||0;
+  const tarjetas=parseFloat(document.getElementById('bov-rec-tarjetas')?.value)||0;
+  const manuales=parseFloat(document.getElementById('bov-rec-manuales')?.value)||0;
+  const dolares=parseFloat(document.getElementById('bov-dolares')?.value)||0;
+  const tipoCambio=parseFloat(document.getElementById('bov-tipocambio')?.value)||0;
+  const dolaresPesos=dolares*tipoCambio;
+  const ts=document.getElementById('bov-rec-tarjetas-sub');if(ts)ts.textContent=fmt(tarjetas);
+  const ms=document.getElementById('bov-rec-manuales-sub');if(ms)ms.textContent=fmt(manuales);
+  const dp=document.getElementById('bov-dolares-pesos');if(dp)dp.textContent=fmt(dolaresPesos);
+  const total=efectivo+tarjetas+manuales+dolaresPesos;
+  const tv=document.getElementById('total-bov');if(tv)tv.textContent=fmt(total);
+  return {efectivo,tarjetas,manuales,dolares,tipoCambio,dolaresPesos,total};
+}
+window.calcBalance=function(){
+  const efectivo=nv('bov-sys-efectivo');
+  const tarjetas=nv('bov-sys-tarjetas');
+  const manuales=nv('bov-sys-manuales');
+  const jackpots=nv('bov-sys-jackpots');
+  const balance=efectivo+tarjetas+manuales+jackpots;
+  const el=document.getElementById('bov-balance');
+  if(el) el.value=balance.toFixed(2);
+  // No llamamos calcVarianza para no mostrar el panel a la bovedista
+}
+window.calcVarianza=function(){
+  // Solo se ejecuta internamente al sellar, no se muestra a la bovedista
+  const balance=nv('bov-balance');
+  const recibido=parseFloat(document.getElementById('total-bov')?.textContent?.replace(/[$,]/g,''))||0;
+  return recibido-balance;
+}
+window.confirmarBov=async function(id){
+  const balance=nv('bov-balance');
+  if(balance<=0){document.getElementById('msg-bov').innerHTML='<div class="alert alert-danger">Ingresa el balance del sistema.</div>';return}
+  const recibido=parseFloat(document.getElementById('total-bov')?.textContent?.replace(/[$,]/g,''))||0;
+  if(recibido<=0){document.getElementById('msg-bov').innerHTML='<div class="alert alert-danger">Captura los billetes recibidos.</div>';return}
+  const {efectivo:bovEfectivo,tarjetas:bovTarjetas,manuales:bovManuales,dolares:bovDolares,tipoCambio:bovTipoCambio,dolaresPesos:bovDolaresPesos}=recalcBov();
+  // Confirmación antes de sellar
+  if(!confirm(`¿Confirmas sellar este registro?\n\nBalance sistema: $${balance.toFixed(2)}\nEfectivo recibido: $${recibido.toFixed(2)}\nVarianza: $${(recibido-balance).toFixed(2)}\n\nUna vez sellado NO podrá modificarse.`))return;
+
+  // Construir recibo simplificado
+  const corte=cortesCache.find(x=>x.id===id);
+  const efectivoRecibido=parseFloat(document.getElementById('bov-efectivo-total')?.value)||0;
+  const tarjetasRecibidas=parseFloat(document.getElementById('bov-rec-tarjetas')?.value)||0;
+  const manualesRecibidos=parseFloat(document.getElementById('bov-rec-manuales')?.value)||0;
+  const dolaresRecibidos=parseFloat(document.getElementById('bov-dolares')?.value)||0;
+  const tipoCambioRec=parseFloat(document.getElementById('bov-tipocambio')?.value)||0;
+  const dolaresPesosRec=dolaresRecibidos*tipoCambioRec;
+
+  // Imprimir recibo ANTES de sellar
+  const ventana=window.open('','_blank','width=400,height=600');
+  ventana.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo de efectivo</title>
+  <style>
+    body{font-family:'Segoe UI',sans-serif;padding:20px;color:#000;max-width:380px;margin:0 auto}
+    h2{text-align:center;font-size:16px;margin-bottom:4px}
+    .sub{text-align:center;font-size:12px;color:#666;margin-bottom:16px}
+    .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:13px}
+    .total-row{display:flex;justify-content:space-between;padding:10px 0;font-weight:700;font-size:15px;border-top:2px solid #000;margin-top:4px}
+    .firma{margin-top:30px;display:flex;justify-content:space-between;gap:20px}
+    .firma-box{flex:1;text-align:center}
+    .firma-line{border-top:1px solid #000;margin-top:40px;padding-top:6px;font-size:11px;color:#666}
+    .info{font-size:12px;margin-bottom:6px}
+    .divider{border:none;border-top:1px dashed #ccc;margin:12px 0}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <h2>Casino Tique</h2>
+  <div class="sub">Comprobante de entrega de efectivo</div>
+  <hr class="divider">
+  <div class="info"><strong>Cajera:</strong> ${corte?.cajera||'—'}</div>
+  <div class="info"><strong>Bovedista:</strong> ${currentUser.nombre}</div>
+  <div class="info"><strong>Turno:</strong> ${corte?.turno==='matutino'?'Matutino (10:00–18:00)':'Vespertino (18:00–02:00)'}</div>
+  <div class="info"><strong>Fecha:</strong> ${new Date().toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+  <hr class="divider">
+  <div class="row"><span>Efectivo en pesos</span><span>$${efectivoRecibido.toFixed(2)}</span></div>
+  ${tarjetasRecibidas>0?`<div class="row"><span>Tarjetas de crédito</span><span>$${tarjetasRecibidas.toFixed(2)}</span></div>`:''}
+  ${manualesRecibidos>0?`<div class="row"><span>Pagos manuales</span><span>$${manualesRecibidos.toFixed(2)}</span></div>`:''}
+  ${dolaresRecibidos>0?`<div class="row"><span>Dólares (${dolaresRecibidos} USD × $${tipoCambioRec})</span><span>$${dolaresPesosRec.toFixed(2)}</span></div>`:''}
+  <div class="total-row"><span>TOTAL RECIBIDO</span><span>$${recibido.toFixed(2)}</span></div>
+  <div class="firma">
+    <div class="firma-box"><div class="firma-line">Firma cajera<br>${corte?.cajera||''}</div></div>
+    <div class="firma-box"><div class="firma-line">Firma bovedista<br>${currentUser.nombre}</div></div>
+  </div>
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`);
+  ventana.document.close();
+
+  // Esperar a que se imprima y luego sellar
+  const varianza=recibido-balance;  const btn=document.querySelector(`[onclick="confirmarBov('${id}')"]`);if(btn){btn.disabled=true;btn.textContent='Sellando...'}
+  try{
+    await updateDoc(doc(db,'cortes',id),{
+      numTurno:nv('bov-numturno'),montoApertura:nv('bov-apertura'),
+      sys_efectivo:nv('bov-sys-efectivo'),sys_tarjetas:nv('bov-sys-tarjetas'),
+      sys_pagosManuales:nv('bov-sys-manuales'),sys_jackpots:nv('bov-sys-jackpots'),
+      sys_balance:balance,bov_efectivoRecibido:recibido,
+      bov_efectivo:bovEfectivo,bov_tarjetas:bovTarjetas,bov_manuales:bovManuales,
+      bov_dolares:bovDolares,bov_tipoCambio:bovTipoCambio,bov_dolaresPesos:bovDolaresPesos,
+      bov_nombre:currentUser.nombre,obs_bov:document.getElementById('bov-obs')?.value||'',
+      fecha_bov:serverTimestamp(),estado:'completo',varianza,
+      estado_varianza:Math.abs(varianza)<0.01?'ok':varianza<0?'faltante':'sobrante'
+    });
+    const ok=Math.abs(varianza)<0.01,neg=varianza<0;
+    const varColor=ok?'var(--green)':neg?'var(--red)':'var(--blue)';
+    const varBg=ok?'var(--green-bg)':neg?'var(--red-bg)':'var(--blue-bg)';
+    const varBorder=ok?'var(--green-border)':neg?'var(--red-border)':'var(--blue-border)';
+    document.getElementById('main-content').innerHTML=`
+      <div class="sec-header"><div><h3>Registro sellado</h3><p>Este corte quedó guardado en la nube y no puede modificarse.</p></div></div>
+      <div class="alert alert-success">🔒 Registro sellado exitosamente por <strong>${currentUser.nombre}</strong></div>
+      <div class="card">
+        <div class="card-title">Resumen del corte sellado</div>
+        <div class="cmp-row"><span class="cmp-lbl">N° turno</span><span>${nv('bov-numturno')||'—'}</span></div>
+        <div class="cmp-row"><span class="cmp-lbl">Monto apertura</span><span>${fmt(nv('bov-apertura'))}</span></div>
+        <div class="cmp-row"><span class="cmp-lbl">Efectivo (sistema)</span><span>${fmt(nv('bov-sys-efectivo'))}</span></div>
+        <div class="cmp-row"><span class="cmp-lbl">Tarjetas (sistema)</span><span>${fmt(nv('bov-sys-tarjetas'))}</span></div>
+        <div class="cmp-row"><span class="cmp-lbl">Pagos manuales</span><span>${fmt(nv('bov-sys-manuales'))}</span></div>
+        <div class="cmp-row"><span class="cmp-lbl">Jackpots</span><span>${fmt(nv('bov-sys-jackpots'))}</span></div>
+        <div class="cmp-row"><span class="cmp-lbl" style="color:var(--amber)">Balance sistema</span><span style="color:var(--amber);font-weight:700">${fmt(balance)}</span></div>
+        <div class="cmp-row"><span class="cmp-lbl">Efectivo recibido</span><span>${fmt(bovEfectivo)}</span></div>
+        ${bovTarjetas>0?`<div class="cmp-row"><span class="cmp-lbl">Tarjetas recibidas</span><span>${fmt(bovTarjetas)}</span></div>`:''}
+        ${bovManuales>0?`<div class="cmp-row"><span class="cmp-lbl">Manuales recibidos</span><span>${fmt(bovManuales)}</span></div>`:''}
+        ${bovDolares>0?`<div class="cmp-row"><span class="cmp-lbl" style="color:var(--blue)">Dólares recibidos</span><span style="color:var(--blue)">${bovDolares} USD × ${fmt(bovTipoCambio)} = ${fmt(bovDolaresPesos)}</span></div>`:''}
+        <div class="cmp-row"><span class="cmp-lbl" style="color:var(--purple)">Total recibido</span><span style="font-weight:700;color:var(--purple)">${fmt(recibido)}</span></div>
+      </div>
+      <div class="varianza-grande" style="border-color:${varBorder};background:${varBg}">
+        <div class="lbl" style="color:${varColor}">Varianza</div>
+        <div class="val" style="color:${varColor}">${fmt(varianza)}</div>
+      </div>
+      <div style="margin-top:1rem;font-size:13px;color:var(--text3);text-align:center">
+        ${ok?'✓ El efectivo cuadra perfectamente con el sistema.':neg?'⚠ La cajera entregó menos de lo que indica el sistema. El gerente y administrador ya pueden ver este registro.':'La cajera entregó más de lo que indica el sistema.'}
+      </div>`;
+  }catch(e){
+    const msg=document.getElementById('msg-bov');
+    if(msg)msg.innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>';
+    if(btn){btn.disabled=false;btn.textContent='Sellar registro ✓'}
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// GERENTE — cortes + gestión de usuarios (sin tocar admins)
+// ══════════════════════════════════════════════════════════════
+async function renderGerente(){
+  const snap=await getDocs(collection(db,'usuarios'));
+  usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  document.getElementById('main-content').innerHTML=`
+    <div class="sec-header"><div><h3>Panel de gerente</h3><p>Bienvenido, ${currentUser.nombre}</p></div></div>
+    <div class="nav-tabs no-print">
+      <button class="nav-tab ${gerenteTab==='cortes'?'active':''}" onclick="switchGerenteTab('cortes')">📋 Cortes</button>
+      <button class="nav-tab ${gerenteTab==='usuarios'?'active':''}" onclick="switchGerenteTab('usuarios')">👥 Usuarios</button>
+    </div>
+    <div id="gerente-tab-content"></div>`;
+  renderGerenteTabContent();
+}
+window.switchGerenteTab=function(tab){
+  gerenteTab=tab;filtroCajera='';filtroEstado='';
+  document.querySelectorAll('.nav-tab').forEach((b,i)=>{const tabs=['cortes','usuarios'];b.className='nav-tab'+(tabs[i]===tab?' active':'');});
+  renderGerenteTabContent();
+}
+function renderGerenteTabContent(){
+  if(gerenteTab==='cortes') renderGerenteCortes();
+  else renderGerenteUsuarios();
+}
+function renderGerenteCortes(){
+  const el=document.getElementById('gerente-tab-content');if(!el)return;
+  el.innerHTML=`
+    <div class="sec-header">
+      <div></div>
+      <div style="display:flex;gap:8px" class="no-print">
+        <button class="btn btn-print btn-sm" onclick="imprimirHistorial()">🖨️ Imprimir</button>
+        <button class="btn btn-green btn-sm" onclick="exportarCSV()">Exportar CSV</button>
+      </div>
+    </div>
+    <div class="filter-bar no-print">
+      <div class="tab-pills">
+        <button class="tab-pill ${filtroTipo==='hoy'?'active':''}" id="pill-hoy" onclick="setFiltro('hoy')">Hoy</button>
+        <button class="tab-pill ${filtroTipo==='dia'?'active':''}" id="pill-dia" onclick="setFiltro('dia')">Día específico</button>
+        <button class="tab-pill ${filtroTipo==='rango'?'active':''}" id="pill-rango" onclick="setFiltro('rango')">Rango de fechas</button>
+        <button class="tab-pill ${filtroTipo==='todos'?'active':''}" id="pill-todos" onclick="setFiltro('todos')">Todos</button>
+      </div>
+      <div id="filter-inputs"></div>
+    </div>
+    <div id="sup-metricas"></div><div id="sup-lista"></div>`;
+  renderMetricas();renderLista();
+}
+function renderGerenteUsuarios(){
+  const el=document.getElementById('gerente-tab-content');if(!el)return;
+  // El gerente NO ve ni puede tocar usuarios con rol admin
+  const visibles=usuariosCache.filter(u=>u.rol!=='admin');
+  const orden={gerente:0,supervisor:1,bovedista:2,cajera:3};
+  const sorted=[...visibles].sort((a,b)=>(orden[a.rol]||9)-(orden[b.rol]||9)||a.nombre.localeCompare(b.nombre));
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div style="font-size:14px;color:var(--text2)">${visibles.length} usuarios</div>
+      <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="abrirModalNuevoUsuarioGerente()">+ Nuevo usuario</button>
+    </div>
+    <div class="alert alert-info" style="margin-bottom:1rem">Como gerente puedes crear usuarios y resetear contraseñas. La gestión de administradores es exclusiva del administrador.</div>
+    <div class="card"><div id="lista-usuarios-gerente">
+      ${sorted.map(u=>{
+        const activo=u.activo!==false,color=ROLE_COLOR[u.rol]||'var(--text2)';
+        return`<div class="user-row">
+          <div class="user-avatar" style="background:${color}22;color:${color};border:0.5px solid ${color}44">${initials(u.nombre)}</div>
+          <div class="user-info">
+            <div class="user-name">${u.nombre}
+              ${!activo?'<span class="badge badge-off" style="margin-left:6px">Inactivo</span>':''}
+              ${u.primerAcceso?'<span class="badge badge-pend" style="margin-left:4px">Sin activar</span>':''}
+            </div>
+            <div class="user-meta">@${u.username} · <span style="color:${color}">${ROLE_LBL[u.rol]||u.rol}</span></div>
+          </div>
+          <div class="user-actions">
+            <button class="btn btn-xs btn-amber" onclick="resetearPassGerente('${u.id}')">Reset pass</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div></div>`;
+}
+window.abrirModalNuevoUsuarioGerente=function(){
+  editingUserId=null;
+  document.getElementById('modal-usr-title').textContent='Nuevo usuario';
+  document.getElementById('modal-usr-btn').textContent='Crear usuario';
+  ['usr-nombre','usr-username','usr-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  // Gerente no puede crear admins — quitar esa opción
+  const sel=document.getElementById('usr-rol');
+  sel.innerHTML=`<option value="cajera">Cajera</option><option value="bovedista">Bovedista</option><option value="supervisor">Supervisor (solo lectura)</option><option value="gerente">Gerente</option>`;
+  sel.value='cajera';
+  document.getElementById('usr-pass-group').style.display='block';
+  document.getElementById('modal-usr-msg').innerHTML='';
+  // Redirigir guardar al handler de gerente
+  document.getElementById('modal-usr-btn').setAttribute('onclick','guardarUsuarioGerente()');
+  document.getElementById('modal-usuario').classList.add('open');
+}
+window.guardarUsuarioGerente=async function(){
+  const nombre=document.getElementById('usr-nombre').value.trim(),username=document.getElementById('usr-username').value.trim().toLowerCase();
+  const rol=document.getElementById('usr-rol').value,pass=document.getElementById('usr-pass').value.trim();
+  const msg=document.getElementById('modal-usr-msg');
+  if(['admin'].includes(rol)){msg.innerHTML='<div class="alert alert-danger">No tienes permiso para crear administradores.</div>';return}
+  if(!nombre||!username){msg.innerHTML='<div class="alert alert-danger">Nombre y usuario son obligatorios.</div>';return}
+  if(!pass){msg.innerHTML='<div class="alert alert-danger">Ingresa una contraseña temporal.</div>';return}
+  const todos=await getDocs(collection(db,'usuarios'));
+  const existe=todos.docs.find(d=>d.data().username===username);
+  if(existe){msg.innerHTML='<div class="alert alert-danger">Ese usuario ya existe.</div>';return}
+  try{
+    await addDoc(collection(db,'usuarios'),{nombre,username,rol,pass,primerAcceso:true,activo:true,createdAt:serverTimestamp()});
+    msg.innerHTML=`<div class="alert alert-success">✓ Usuario creado.<br>@${username} · Contraseña temporal: <strong>${pass}</strong></div>`;
+    const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+    setTimeout(()=>{closeModal('modal-usuario');renderGerenteUsuarios();},2000);
+  }catch(e){msg.innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>'}
+}
+window.resetearPassGerente=async function(id){
+  const u=usuariosCache.find(x=>x.id===id);if(!u)return;
+  if(u.rol==='admin'){alert('No tienes permiso para resetear la contraseña del administrador.');return}
+  const np=prompt(`Nueva contraseña temporal para ${u.nombre}:`);
+  if(!np||np.length<4){if(np!==null)alert('Mínimo 4 caracteres.');return}
+  await updateDoc(doc(db,'usuarios',id),{pass:np,primerAcceso:true});
+  alert(`✓ Contraseña de ${u.nombre} reseteada.\nContraseña temporal: "${np}"`);
+  const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderGerenteUsuarios();
+}
+
+function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+
+
+function renderVistaCortes(){
+  const esSolo=currentUser.rol==='supervisor';
+  document.getElementById('main-content').innerHTML=`
+    <div class="print-header"><h2>Casino Tique — Reporte de Cortes</h2><p>Impreso: ${new Date().toLocaleString('es-MX')}</p></div>
+    <div class="sec-header">
+      <div>
+        <h3>${esSolo?'Vista de cortes':'Panel de supervisión'}</h3>
+        <p>${esSolo?'Solo lectura — no se pueden realizar modificaciones.':'Historial completo en tiempo real.'}</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" class="no-print">
+        ${esSolo?'<span class="readonly-badge">🔒 Solo lectura</span>':''}
+        <span class="realtime-badge"><span class="sync-dot"></span> Tiempo real</span>
+        <button class="btn btn-print btn-sm" onclick="imprimirHistorial()">🖨️ Imprimir historial</button>
+        ${!esSolo?'<button class="btn btn-green btn-sm" onclick="exportarCSV()">Exportar CSV</button>':''}
+      </div>
+    </div>
+    <div class="filter-bar no-print">
+      <div class="tab-pills">
+        <button class="tab-pill ${filtroTipo==='hoy'?'active':''}" id="pill-hoy" onclick="setFiltro('hoy')">Hoy</button>
+        <button class="tab-pill ${filtroTipo==='dia'?'active':''}" id="pill-dia" onclick="setFiltro('dia')">Día específico</button>
+        <button class="tab-pill ${filtroTipo==='rango'?'active':''}" id="pill-rango" onclick="setFiltro('rango')">Rango de fechas</button>
+        <button class="tab-pill ${filtroTipo==='todos'?'active':''}" id="pill-todos" onclick="setFiltro('todos')">Todos</button>
+      </div>
+      <div id="filter-inputs"></div>
+    </div>
+    <div id="sup-metricas"></div>
+    <div id="sup-lista"></div>`;
+  renderMetricas();renderLista();
+}
+
+window.toggleC=function(id){
+  // Soporta IDs normales y los del historial de cajera (hist-xxx)
+  const elId=id.startsWith('hist-')?'cb-'+id:'cb-'+id;
+  const el=document.getElementById(elId);
+  if(el)el.classList.toggle('open');
+}
+
+function refrescarCortes(){
+  if(currentUser?.rol==='admin'){
+    if(adminTab==='resumen') renderAdminResumen();
+    if(adminTab==='cortes'&&document.getElementById('sup-lista')){renderMetricas();renderLista();}
+  }
+  if(currentUser?.rol==='gerente'&&gerenteTab==='cortes'&&document.getElementById('sup-lista')){renderMetricas();renderLista();}
+  if(currentUser?.rol==='supervisor'&&document.getElementById('sup-lista')){renderMetricas();renderLista();}
+}
+
+window.setFiltro=function(tipo){
+  filtroTipo=tipo;
+  ['hoy','dia','rango','todos'].forEach(t=>{const el=document.getElementById('pill-'+t);if(el)el.className='tab-pill'+(t===tipo?' active':'');});
+  renderFiltroInputs();
+  renderMetricas();renderLista();
+}
+window.setFiltroCajera=function(val){filtroCajera=val;}
+function renderFiltroInputs(){
+  const fi=document.getElementById('filter-inputs');if(!fi)return;
+  const cajeras=[...new Map(cortesCache.filter(c=>c.cajera).map(c=>[c.cajera_id||c.cajera,{id:c.cajera_id||c.cajera,nombre:c.cajera}])).values()];
+  const cajeraSelector=cajeras.length>0?`
+    <div class="fg-sm"><label>Cajera</label>
+      <select id="sel-cajera" style="padding:7px 10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:13px;outline:none">
+        <option value="">Todas</option>
+        ${cajeras.map(c=>`<option value="${c.id}" ${filtroCajera===c.id?'selected':''}>${c.nombre}</option>`).join('')}
+      </select>
+    </div>`:'';
+  const estadoBadge=filtroEstado?`
+    <div style="display:flex;align-items:center;gap:6px;align-self:flex-end">
+      <span class="badge ${filtroEstado==='pendiente'?'badge-pend':'badge-bad'}">${filtroEstado==='pendiente'?'⏳ Solo pendientes':'⚠ Solo varianzas negativas'}</span>
+      <button onclick="filtroEstado='';renderMetricas();renderLista()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1" title="Quitar filtro">✕</button>
+    </div>`:'';
+  let fechaInputs='';
+  if(filtroTipo==='dia'){
+    fechaInputs=`<div class="fg-sm"><label>Fecha</label><input type="date" id="inp-dia" value="${filtroDia}" style="padding:7px 10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:13px;outline:none"></div>`;
+  } else if(filtroTipo==='rango'){
+    fechaInputs=`
+      <div class="fg-sm"><label>Desde</label><input type="date" id="inp-desde" value="${filtroDesde}" style="padding:7px 10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:13px;outline:none"></div>
+      <div class="fg-sm"><label>Hasta</label><input type="date" id="inp-hasta" value="${filtroHasta}" style="padding:7px 10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:13px;outline:none"></div>`;
+  } else {
+    fechaInputs=`<span style="font-size:13px;color:var(--text3);align-self:flex-end;padding-bottom:2px">${filtroTipo==='hoy'?'Mostrando cortes de hoy':'Todos los cortes'}</span>`;
+  }
+  // Botón Aplicar solo cuando hay inputs de fecha o cajera
+  const mostrarBoton=filtroTipo==='dia'||filtroTipo==='rango'||cajeras.length>0;
+  const botonAplicar=mostrarBoton?`
+    <div style="align-self:flex-end">
+      <button class="btn btn-sm" style="background:var(--purple);color:#fff;padding:7px 18px" onclick="aplicarFiltros()">Aplicar ✓</button>
+    </div>`:'';
+  fi.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">${fechaInputs}${cajeraSelector}${botonAplicar}${estadoBadge}</div>`;
+}
+
+window.aplicarFiltros=function(){
+  // Leer valores actuales de los inputs antes de filtrar
+  const inpDia=document.getElementById('inp-dia');
+  const inpDesde=document.getElementById('inp-desde');
+  const inpHasta=document.getElementById('inp-hasta');
+  const inpCajera=document.getElementById('sel-cajera');
+  if(inpDia) filtroDia=inpDia.value;
+  if(inpDesde) filtroDesde=inpDesde.value;
+  if(inpHasta) filtroHasta=inpHasta.value;
+  if(inpCajera) filtroCajera=inpCajera.value;
+  renderMetricas();renderLista();
+}
+
+function cortesFiltered(){
+  return cortesCache.filter(c=>{
+    if(!c.fecha)return false;
+    // Usar fechaTurno si existe (vespertino nocturno), si no usar fecha real
+    const d=c.fechaTurno||isoDate(c.fecha);
+    let pasaFecha=true;
+    if(filtroTipo==='hoy') pasaFecha=d===hoy();
+    else if(filtroTipo==='dia') pasaFecha=d===filtroDia;
+    else if(filtroTipo==='rango') pasaFecha=d>=filtroDesde&&d<=filtroHasta;
+    const pasaCajera=!filtroCajera||c.cajera_id===filtroCajera||c.cajera===filtroCajera;
+    const pasaEstado=!filtroEstado
+      ||(filtroEstado==='pendiente'&&c.estado==='pendiente')
+      ||(filtroEstado==='faltante'&&c.estado_varianza==='faltante')
+      ||(filtroEstado==='sobrante'&&c.estado_varianza==='sobrante');
+    return pasaFecha&&pasaCajera&&pasaEstado;
+  });
+}
+window.renderMetricas=function(){
+  renderFiltroInputs();
+  const lista=cortesFiltered();
+  const comp=lista.filter(c=>c.estado==='completo');
+  const pend=lista.filter(c=>c.estado==='pendiente');
+  const falt=comp.filter(c=>c.estado_varianza==='faltante');
+  const sobr=comp.filter(c=>c.estado_varianza==='sobrante');
+  const sinVar=comp.filter(c=>c.estado_varianza==='ok');
+  const totFalt=falt.reduce((a,c)=>a+Math.abs(c.varianza||0),0);
+  const totSobr=sobr.reduce((a,c)=>a+Math.abs(c.varianza||0),0);
+  const el=document.getElementById('sup-metricas');if(!el)return;
+  el.innerHTML=`
+    <div class="metric-grid-4" style="margin-bottom:10px">
+      <div class="metric" style="cursor:pointer" onclick="filtroEstado='';filtroTipo='todos';renderMetricas();renderLista()">
+        <div class="metric-lbl">Cortes en período</div>
+        <div class="metric-val mv-purple">${lista.length}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${comp.length} sellados · ${pend.length} pendientes</div>
+      </div>
+      <div class="metric" style="cursor:pointer" onclick="filtroEstado='';renderMetricas();renderLista()">
+        <div class="metric-lbl">Sin varianza</div>
+        <div class="metric-val mv-green">${sinVar.length}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Cuadran perfectamente</div>
+      </div>
+      <div class="metric" style="cursor:pointer;border-color:${totFalt>0?'var(--red-border)':'var(--border)'}" onclick="filtroEstado='faltante';renderMetricas();renderLista()">
+        <div class="metric-lbl">Total varianza negativa</div>
+        <div class="metric-val mv-red">${fmt(totFalt)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${falt.length} corte(s) con faltante</div>
+      </div>
+      <div class="metric" style="cursor:pointer" onclick="filtroEstado='pendiente';renderMetricas();renderLista()">
+        <div class="metric-lbl">Total varianza positiva</div>
+        <div class="metric-val mv-amber">${fmt(totSobr)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${sobr.length} corte(s) con sobrante</div>
+      </div>
+    </div>`;
+}
+window.renderLista=function(){
+  const lista=cortesFiltered(),sl=document.getElementById('sup-lista');if(!sl)return;
+  if(lista.length===0){sl.innerHTML='<div class="empty-state"><div style="font-size:32px;margin-bottom:10px">📋</div><p>Sin cortes en este período.</p></div>';return}
+  sl.innerHTML=lista.map(c=>buildCorteCard(c)).join('');
+}
+
+function buildCorteCard(c){
+  const comp=c.estado==='completo',ev=c.estado_varianza;
+  const badge=!comp?'<span class="badge badge-pend">Pendiente bovedista</span>':ev==='ok'?'<span class="badge badge-ok">Sin varianza</span>':ev==='faltante'?'<span class="badge badge-bad">⚠ Varianza negativa</span>':'<span class="badge badge-ok">Sobrante</span>';
+  let body=`
+    <div class="section-sep">📋 Registro cajera</div>
+    <div class="cmp-row"><span class="cmp-lbl">Cajera</span><span>${c.cajera}</span></div>
+    <div class="cmp-row"><span class="cmp-lbl">Turno</span><span>${c.turno==='matutino'?'Matutino (10–18h)':'Vespertino (18–02h)'}</span></div>
+    <div class="cmp-row"><span class="cmp-lbl">Fecha / hora</span><span>${fmtTs(c.fecha)}</span></div>
+    <div class="cmp-row"><span class="cmp-lbl">Efectivo declarado</span><span>${fmt(c.totalEfectivo)}</span></div>
+    ${(c.totalTarjetas>0)?`<div class="cmp-row"><span class="cmp-lbl">Tarjetas declaradas</span><span>${fmt(c.totalTarjetas)}</span></div>`:''}
+    ${(c.totalManuales>0)?`<div class="cmp-row"><span class="cmp-lbl">Pagos manuales</span><span>${fmt(c.totalManuales)}</span></div>`:''}
+    ${(c.totalDolares>0)?`<div class="cmp-row"><span class="cmp-lbl" style="color:var(--blue)">Dólares</span><span style="color:var(--blue)">${c.totalDolares} USD × ${fmt(c.tipoCambio)} = ${fmt(c.totalDolaresPesos)}</span></div>`:''}
+    <div class="cmp-row"><span class="cmp-lbl" style="color:var(--purple)">Total general cajera</span><span style="font-weight:700;color:var(--purple)">${fmt(c.totalGeneral||c.totalEfectivo)}</span></div>
+    ${c.obs_cajera?`<div class="cmp-row"><span class="cmp-lbl">Notas cajera</span><span style="font-size:12px">${c.obs_cajera}</span></div>`:''}`;
+  if(comp){
+    body+=`<div class="divider"></div>
+      <div class="section-sep">🏦 Registro bovedista / Sistema</div>
+      <div class="cmp-row"><span class="cmp-lbl">Bovedista</span><span>${c.bov_nombre}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl">Hora recibo</span><span>${fmtTs(c.fecha_bov)}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl">N° turno</span><span>${c.numTurno||'—'}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl">Apertura</span><span>${fmt(c.montoApertura)}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl">Efectivo (sistema)</span><span>${fmt(c.sys_efectivo)}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl">Tarjetas (sistema)</span><span>${fmt(c.sys_tarjetas)}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl">Pagos manuales</span><span>${fmt(c.sys_pagosManuales)}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl">Jackpots</span><span>${fmt(c.sys_jackpots)}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl" style="color:var(--amber)">Balance sistema</span><span style="color:var(--amber);font-weight:700">${fmt(c.sys_balance)}</span></div>
+      <div class="cmp-row"><span class="cmp-lbl">Efectivo recibido</span><span>${fmt(c.bov_efectivo||c.bov_efectivoRecibido)}</span></div>
+      ${(c.bov_tarjetas>0)?`<div class="cmp-row"><span class="cmp-lbl">Tarjetas recibidas</span><span>${fmt(c.bov_tarjetas)}</span></div>`:''}
+      ${(c.bov_manuales>0)?`<div class="cmp-row"><span class="cmp-lbl">Manuales recibidos</span><span>${fmt(c.bov_manuales)}</span></div>`:''}
+      ${(c.bov_dolares>0)?`<div class="cmp-row"><span class="cmp-lbl" style="color:var(--blue)">Dólares recibidos</span><span style="color:var(--blue)">${c.bov_dolares} USD × ${fmt(c.bov_tipoCambio)} = ${fmt(c.bov_dolaresPesos)}</span></div>`:''}
+      <div class="cmp-row"><span class="cmp-lbl" style="color:var(--purple)">Total recibido</span><span style="font-weight:700;color:var(--purple)">${fmt(c.bov_efectivoRecibido)}</span></div>
+      ${c.obs_bov?`<div class="cmp-row"><span class="cmp-lbl">Notas bovedista</span><span style="font-size:12px">${c.obs_bov}</span></div>`:''}
+      <div class="varianza-grande" style="border-color:${ev==='ok'?'var(--green-border)':ev==='faltante'?'var(--red-border)':'var(--blue-border)'};background:${ev==='ok'?'var(--green-bg)':ev==='faltante'?'var(--red-bg)':'var(--blue-bg)'}">
+        <div class="lbl" style="color:${ev==='ok'?'var(--green)':ev==='faltante'?'var(--red)':'var(--blue)'}">Varianza</div>
+        <div class="val" style="color:${ev==='ok'?'var(--green)':ev==='faltante'?'var(--red)':'var(--blue)'}">${fmt(c.varianza)}</div>
+      </div>
+      ${c.ultimaEdicion?`<div class="divider"></div>
+      <div style="background:var(--amber-bg);border:0.5px solid var(--amber-border);border-radius:var(--radius);padding:10px 12px;margin-top:4px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--amber);margin-bottom:6px">✏️ Registro editado por administrador</div>
+        <div class="cmp-row" style="border-color:rgba(246,173,85,0.2)"><span class="cmp-lbl">Editado por</span><span style="color:var(--amber)">${c.ultimaEdicion.por}</span></div>
+        <div class="cmp-row" style="border-color:rgba(246,173,85,0.2)"><span class="cmp-lbl">Fecha edición</span><span style="color:var(--amber)">${new Date(c.ultimaEdicion.fecha).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span></div>
+        <div class="cmp-row" style="border-bottom:none"><span class="cmp-lbl">Motivo</span><span style="color:var(--amber);font-style:italic">${c.ultimaEdicion.motivo}</span></div>
+      </div>`:''}
+      <div class="actions no-print" style="margin-top:10px">
+        <button class="btn btn-print btn-xs" onclick="imprimirCorteId('${c.id}')">🖨️ Imprimir</button>
+        ${currentUser.rol==='admin'?`<button class="btn btn-xs btn-amber" onclick="abrirModalEditarCorte('${c.id}','admin')">✏️ Editar</button>`:''}
+        ${currentUser.rol==='gerente'&&comp?`<button class="btn btn-xs btn-amber" onclick="abrirModalEditarCorte('${c.id}','gerente')">✏️ Editar</button>`:''}
+        ${(currentUser.rol==='admin'||currentUser.rol==='gerente')?`<button class="btn btn-xs btn-red" onclick="borrarCorte('${c.id}','${c.cajera?.replace(/'/g,"\\'")||''}')">🗑️ Borrar</button>`:''}
+      </div>`;
+  }else{
+    body+=`<div style="margin-top:8px;font-size:12px;color:var(--text3)">Esperando confirmación de bovedista...</div>`;
+  }
+  return`<div class="corte-card">
+    <div class="corte-hdr" onclick="toggleC('${c.id}')">
+      <div><div class="corte-title">Corte — ${c.cajera}</div>
+        <div class="corte-meta">${fmtTs(c.fecha)} · ${c.turno==='matutino'?'Matutino':'Vespertino'}${comp?` · Varianza: ${fmt(c.varianza)}`:''}</div></div>
+      ${badge}
+    </div>
+    <div class="corte-body" id="cb-${c.id}">${body}</div>
+  </div>`;
+}
+// ── ADMIN: EDITAR CORTE ───────────────────────────────────────
+let editingCorteId=null, editingRol=null;
+window.contarCharsMotivo=function(minimo){
+  const ta=document.getElementById('ec-motivo');
+  const cont=document.getElementById('chars-contador');
+  if(!ta||!cont)return;
+  const n=ta.value.length;
+  cont.textContent=`${n} / ${minimo} caracteres mínimos`;
+  cont.style.color=n>=minimo?'var(--green)':'var(--red)';
+}
+window.abrirModalEditarCorte=function(id,rol){
+  const rolEdicion=rol||currentUser.rol;
+  if(rolEdicion!=='admin'&&rolEdicion!=='gerente'){alert('No tienes permiso para editar registros.');return}
+  editingCorteId=id;
+  editingRol=rolEdicion;
+  const c=cortesCache.find(x=>x.id===id);if(!c)return;
+  const inp=(id,val,label,color='')=>`<div class="fg"><label style="color:${color||'var(--text2)'}">${label}</label><input type="number" id="${id}" value="${val||0}" step="0.01" style="width:100%;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none"></div>`;
+  const minimoChars=rolEdicion==='gerente'?60:1;
+  document.getElementById('edit-corte-fields').innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Corte de <strong style="color:var(--text)">${c.cajera}</strong> · ${fmtTs(c.fecha)}</div>
+    ${rolEdicion==='gerente'?`<div class="alert alert-info" style="margin-bottom:12px">Como gerente puedes editar este corte. El motivo es obligatorio y debe tener al menos <strong>60 caracteres</strong>.</div>`:''}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px">📋 Datos cajera</div>
+    ${inp('ec-totalEfectivo',c.totalEfectivo,'Efectivo declarado')}
+    ${inp('ec-totalTarjetas',c.totalTarjetas,'Tarjetas declaradas')}
+    ${inp('ec-totalManuales',c.totalManuales,'Pagos manuales declarados')}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:12px 0 8px">🏦 Datos bovedista / sistema</div>
+    ${inp('ec-sys_efectivo',c.sys_efectivo,'Efectivo (sistema)')}
+    ${inp('ec-sys_tarjetas',c.sys_tarjetas,'Tarjetas (sistema)')}
+    ${inp('ec-sys_manuales',c.sys_pagosManuales,'Pagos manuales (sistema)')}
+    ${inp('ec-sys_jackpots',c.sys_jackpots,'Jackpots (sistema)')}
+    ${inp('ec-sys_balance',c.sys_balance,'Balance sistema','var(--amber)')}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:12px 0 8px">💵 Recibido por bovedista</div>
+    ${inp('ec-bov_efectivo',c.bov_efectivo||c.bov_efectivoRecibido,'Efectivo recibido')}
+    ${inp('ec-bov_tarjetas',c.bov_tarjetas,'Tarjetas recibidas')}
+    ${inp('ec-bov_manuales',c.bov_manuales,'Manuales recibidos')}
+    <div class="fg">
+      <label style="color:var(--red)">Motivo de la corrección — obligatorio (mínimo ${minimoChars} caracteres)</label>
+      <textarea id="ec-motivo" placeholder="Describe detalladamente el motivo de esta corrección..." oninput="contarCharsMotivo(${minimoChars})" style="width:100%;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--red-border);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none;resize:vertical;min-height:80px"></textarea>
+      <div id="chars-contador" style="font-size:11px;margin-top:4px;color:var(--text3)">0 / ${minimoChars} caracteres mínimos</div>
+    </div>`;
+  document.getElementById('edit-corte-msg').innerHTML='';
+  document.getElementById('modal-edit-corte').classList.add('open');
+}
+  const c=cortesCache.find(x=>x.id===id);if(!c)return;
+  const inp=(id,val,label,color='')=>`<div class="fg"><label style="color:${color||'var(--text2)'}">${label}</label><input type="number" id="${id}" value="${val||0}" step="0.01" style="width:100%;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none"></div>`;
+  document.getElementById('edit-corte-fields').innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Corte de <strong style="color:var(--text)">${c.cajera}</strong> · ${fmtTs(c.fecha)}</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px">📋 Datos cajera</div>
+    ${inp('ec-totalEfectivo',c.totalEfectivo,'Efectivo declarado')}
+    ${inp('ec-totalTarjetas',c.totalTarjetas,'Tarjetas declaradas')}
+    ${inp('ec-totalManuales',c.totalManuales,'Pagos manuales declarados')}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:12px 0 8px">🏦 Datos bovedista / sistema</div>
+    ${inp('ec-sys_efectivo',c.sys_efectivo,'Efectivo (sistema)')}
+    ${inp('ec-sys_tarjetas',c.sys_tarjetas,'Tarjetas (sistema)')}
+    ${inp('ec-sys_manuales',c.sys_pagosManuales,'Pagos manuales (sistema)')}
+    ${inp('ec-sys_jackpots',c.sys_jackpots,'Jackpots (sistema)')}
+    ${inp('ec-sys_balance',c.sys_balance,'Balance sistema','var(--amber)')}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:12px 0 8px">💵 Recibido por bovedista</div>
+    ${inp('ec-bov_efectivo',c.bov_efectivo||c.bov_efectivoRecibido,'Efectivo recibido')}
+    ${inp('ec-bov_tarjetas',c.bov_tarjetas,'Tarjetas recibidas')}
+    ${inp('ec-bov_manuales',c.bov_manuales,'Manuales recibidos')}
+    <div class="fg"><label style="color:var(--red)">Motivo de la corrección (obligatorio)</label>
+      <textarea id="ec-motivo" placeholder="Describe el motivo de esta corrección..." style="width:100%;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--red-border);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none;resize:vertical;min-height:60px"></textarea>
+    </div>`;
+  document.getElementById('edit-corte-msg').innerHTML='';
+  document.getElementById('modal-edit-corte').classList.add('open');
+}
+window.guardarEdicionCorte=async function(){
+  if(!editingCorteId||(editingRol!=='admin'&&editingRol!=='gerente'))return;
+  const motivo=document.getElementById('ec-motivo').value.trim();
+  const minimoChars=editingRol==='gerente'?60:1;
+  if(motivo.length<minimoChars){
+    document.getElementById('edit-corte-msg').innerHTML=`<div class="alert alert-danger">El motivo debe tener al menos ${minimoChars} caracteres. Actualmente tiene ${motivo.length}.</div>`;return
+  }
+  const totalEfectivo=parseFloat(document.getElementById('ec-totalEfectivo').value)||0;
+  const totalTarjetas=parseFloat(document.getElementById('ec-totalTarjetas').value)||0;
+  const totalManuales=parseFloat(document.getElementById('ec-totalManuales').value)||0;
+  const totalGeneral=totalEfectivo+totalTarjetas+totalManuales;
+  const sys_efectivo=parseFloat(document.getElementById('ec-sys_efectivo').value)||0;
+  const sys_tarjetas=parseFloat(document.getElementById('ec-sys_tarjetas').value)||0;
+  const sys_manuales=parseFloat(document.getElementById('ec-sys_manuales').value)||0;
+  const sys_jackpots=parseFloat(document.getElementById('ec-sys_jackpots').value)||0;
+  const sys_balance=parseFloat(document.getElementById('ec-sys_balance').value)||0;
+  const bov_efectivo=parseFloat(document.getElementById('ec-bov_efectivo').value)||0;
+  const bov_tarjetas=parseFloat(document.getElementById('ec-bov_tarjetas').value)||0;
+  const bov_manuales=parseFloat(document.getElementById('ec-bov_manuales').value)||0;
+  const bov_efectivoRecibido=bov_efectivo+bov_tarjetas+bov_manuales;
+  const varianza=bov_efectivoRecibido-sys_balance;
+  try{
+    await updateDoc(doc(db,'cortes',editingCorteId),{
+      totalEfectivo,totalTarjetas,totalManuales,totalGeneral,
+      sys_efectivo,sys_tarjetas,sys_pagosManuales:sys_manuales,sys_jackpots,sys_balance,
+      bov_efectivo,bov_tarjetas,bov_manuales,
+      bov_efectivoRecibido,
+      varianza,
+      estado_varianza:Math.abs(varianza)<0.01?'ok':varianza<0?'faltante':'sobrante',
+      ultimaEdicion:{por:currentUser.nombre,fecha:new Date().toISOString(),motivo}
+    });
+    document.getElementById('edit-corte-msg').innerHTML='<div class="alert alert-success">✓ Corte corregido. Varianza recalculada: '+fmt(varianza)+'</div>';
+    setTimeout(()=>{closeModal('modal-edit-corte');renderLista();},2000);
+  }catch(e){document.getElementById('edit-corte-msg').innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>'}
+}
+
+
+// ── IMPRIMIR ──────────────────────────────────────────────────
+window.imprimirCorte=function(){window.print()} // cajera imprime su resumen
+window.imprimirHistorial=function(){
+  // abre todos los cortes antes de imprimir
+  cortesFiltered().forEach(c=>{const el=document.getElementById('cb-'+c.id);if(el)el.classList.add('open');});
+  setTimeout(()=>window.print(),300);
+}
+window.imprimirCorteId=function(id){
+  // abre solo ese corte
+  document.querySelectorAll('.corte-body').forEach(el=>el.classList.remove('open'));
+  const el=document.getElementById('cb-'+id);if(el)el.classList.add('open');
+  setTimeout(()=>window.print(),200);
+}
+
+// ── ADMIN: BORRAR CORTE ───────────────────────────────────────
+window.borrarCorte=async function(id,cajera){
+  if(currentUser.rol!=='admin'&&currentUser.rol!=='gerente'){
+    alert('Solo el administrador o el gerente pueden borrar registros.');return
+  }
+  const confirmar=confirm(`⚠️ ¿Borrar el corte de "${cajera}"?\n\nEsta acción es permanente y no se puede deshacer.\nEl registro desaparecerá para todos los roles.`);
+  if(!confirmar)return;
+  const clave=prompt('Escribe BORRAR para confirmar la eliminación:');
+  if(clave!=='BORRAR'){
+    if(clave!==null)alert('Cancelado. Debes escribir exactamente BORRAR para confirmar.');
+    return;
+  }
+  try{
+    await deleteDoc(doc(db,'cortes',id));
+  }catch(e){
+    alert('Error al borrar: '+e.message);
+  }
+}
+
+// ── EXPORTAR CSV ──────────────────────────────────────────────
+window.exportarCSV=function(){
+  const lista=cortesFiltered();
+  const headers=['Cajera','Turno','Fecha corte','Cajera declaró','N° Turno','Apertura','Efectivo sistema','Tarjetas','Pagos manuales','Jackpots','Balance sistema','Bovedista','Fecha recibo','Bovedista recibió','Varianza','Estado'];
+  const rows=lista.map(c=>[c.cajera,c.turno,fmtTs(c.fecha),(c.totalEfectivo||0).toFixed(2),c.numTurno||'—',(c.montoApertura||0).toFixed(2),(c.sys_efectivo||0).toFixed(2),(c.sys_tarjetas||0).toFixed(2),(c.sys_pagosManuales||0).toFixed(2),(c.sys_jackpots||0).toFixed(2),(c.sys_balance||0).toFixed(2),c.bov_nombre||'—',fmtTs(c.fecha_bov),c.bov_efectivoRecibido!=null?c.bov_efectivoRecibido.toFixed(2):'—',c.varianza!=null?c.varianza.toFixed(2):'—',c.estado_varianza||'—']);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`cortes_casino_tique_${filtroTipo==='hoy'?hoy():filtroTipo==='dia'?filtroDia:`${filtroDesde}_a_${filtroHasta}`}.csv`;a.click();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════════════════════
+async function renderAdmin(){
+  const snap=await getDocs(collection(db,'usuarios'));
+  usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  document.getElementById('main-content').innerHTML=`
+    <div class="sec-header"><div><h3>Panel de administrador</h3><p>Bienvenido, ${currentUser.nombre}</p></div></div>
+    <div class="nav-tabs no-print">
+      <button class="nav-tab ${adminTab==='resumen'?'active':''}" onclick="switchAdminTab('resumen')">📊 Resumen</button>
+      <button class="nav-tab ${adminTab==='cortes'?'active':''}" onclick="switchAdminTab('cortes')">📋 Cortes</button>
+      <button class="nav-tab ${adminTab==='usuarios'?'active':''}" onclick="switchAdminTab('usuarios')">👥 Usuarios</button>
+    </div>
+    <div id="admin-tab-content"></div>`;
+  renderAdminTabContent();
+}
+window.switchAdminTab=function(tab){
+  adminTab=tab;filtroCajera='';filtroEstado='';
+  document.querySelectorAll('.nav-tab').forEach((b,i)=>{const tabs=['resumen','cortes','usuarios'];b.className='nav-tab'+(tabs[i]===tab?' active':'');});
+  renderAdminTabContent();
+}
+function renderAdminTabContent(){
+  if(adminTab==='resumen') renderAdminResumen();
+  else if(adminTab==='cortes') renderAdminCortes();
+  else renderAdminUsuarios();
+}
+function renderAdminResumen(){
+  const el=document.getElementById('admin-tab-content');if(!el)return;
+  const todos=cortesCache,hoyStr=hoy(),deHoy=todos.filter(c=>(c.fechaTurno||isoDate(c.fecha))===hoyStr);
+  const comp=todos.filter(c=>c.estado==='completo');
+  const pend=todos.filter(c=>c.estado==='pendiente');
+  const falt=comp.filter(c=>c.estado_varianza==='faltante');
+  const sobr=comp.filter(c=>c.estado_varianza==='sobrante');
+  const totFalt=falt.reduce((a,c)=>a+Math.abs(c.varianza||0),0);
+  const totSobr=sobr.reduce((a,c)=>a+Math.abs(c.varianza||0),0);
+  el.innerHTML=`
+    <div class="metric-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
+      <div class="metric" style="cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'" onclick="irACortesFiltrado('hoy','')">
+        <div class="metric-lbl">Cortes hoy</div>
+        <div class="metric-val mv-purple">${deHoy.length}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Ver →</div>
+      </div>
+      <div class="metric" style="cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'" onclick="irACortesFiltrado('todos','pendiente')">
+        <div class="metric-lbl">Pendientes</div>
+        <div class="metric-val mv-amber">${pend.length}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Ver →</div>
+      </div>
+      <div class="metric" style="cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'" onclick="irACortesFiltrado('todos','')">
+        <div class="metric-lbl">Total histórico</div>
+        <div class="metric-val mv-purple">${todos.length}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Ver todos →</div>
+      </div>
+    </div>
+    <div class="metric-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
+      <div class="metric" style="cursor:pointer;border-color:${falt.length>0?'var(--red-border)':'var(--border)'};transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'" onclick="irACortesFiltrado('todos','faltante')">
+        <div class="metric-lbl">Varianzas negativas</div>
+        <div class="metric-val mv-red">${falt.length}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${fmt(totFalt)} total faltante</div>
+        <div style="font-size:11px;color:var(--text3)">Ver →</div>
+      </div>
+      <div class="metric" style="cursor:pointer;border-color:${sobr.length>0?'var(--blue-border)':'var(--border)'};transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'" onclick="irACortesFiltrado('todos','sobrante')">
+        <div class="metric-lbl">Varianzas positivas</div>
+        <div class="metric-val mv-green">${sobr.length}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${fmt(totSobr)} total sobrante</div>
+        <div style="font-size:11px;color:var(--text3)">Ver →</div>
+      </div>
+      <div class="metric">
+        <div class="metric-lbl">Usuarios activos</div>
+        <div class="metric-val mv-green">${usuariosCache.filter(u=>u.activo!==false).length}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${usuariosCache.filter(u=>u.primerAcceso).length} sin activar cuenta</div>
+      </div>
+    </div>
+    ${falt.length>0?`
+    <div class="card">
+      <div class="card-title">⚠ Últimas varianzas negativas</div>
+      ${falt.slice(0,5).map(c=>`
+        <div class="cmp-row" style="cursor:pointer" onclick="irACortesFiltrado('todos','faltante')">
+          <span class="cmp-lbl">${c.cajera} · ${fmtTs(c.fecha)}</span>
+          <span style="color:var(--red);font-weight:600">${fmt(c.varianza)}</span>
+        </div>`).join('')}
+    </div>`:'<div class="alert alert-success">✓ Sin varianzas negativas registradas.</div>'}
+    ${sobr.length>0?`
+    <div class="card">
+      <div class="card-title">📈 Últimas varianzas positivas</div>
+      ${sobr.slice(0,5).map(c=>`
+        <div class="cmp-row" style="cursor:pointer" onclick="irACortesFiltrado('todos','sobrante')">
+          <span class="cmp-lbl">${c.cajera} · ${fmtTs(c.fecha)}</span>
+          <span style="color:var(--green);font-weight:600">${fmt(c.varianza)}</span>
+        </div>`).join('')}
+    </div>`:''}`;
+}
+
+// Navega a la pestaña de cortes con filtro preseleccionado
+window.irACortesFiltrado=function(tipo,estadoFiltro){
+  // Guardar filtro especial de estado
+  filtroEstado=estadoFiltro;
+  filtroTipo=tipo;
+  filtroCajera='';
+  if(currentUser.rol==='admin'){
+    adminTab='cortes';
+    // Actualizar tabs visuales
+    document.querySelectorAll('.nav-tab').forEach((b,i)=>{const tabs=['resumen','cortes','usuarios'];b.className='nav-tab'+(tabs[i]==='cortes'?' active':'');});
+    renderAdminCortes();
+  } else if(currentUser.rol==='gerente'){
+    gerenteTab='cortes';
+    document.querySelectorAll('.nav-tab').forEach((b,i)=>{const tabs=['cortes','usuarios'];b.className='nav-tab'+(tabs[i]==='cortes'?' active':'');});
+    renderGerenteCortes();
+  }
+}
+function renderAdminCortes(){
+  const el=document.getElementById('admin-tab-content');if(!el)return;
+  el.innerHTML=`
+    <div class="sec-header">
+      <div></div>
+      <div style="display:flex;gap:8px" class="no-print">
+        <button class="btn btn-print btn-sm" onclick="imprimirHistorial()">🖨️ Imprimir</button>
+        <button class="btn btn-green btn-sm" onclick="exportarCSV()">Exportar CSV</button>
+      </div>
+    </div>
+    <div class="filter-bar no-print">
+      <div class="tab-pills">
+        <button class="tab-pill ${filtroTipo==='hoy'?'active':''}" id="pill-hoy" onclick="setFiltro('hoy')">Hoy</button>
+        <button class="tab-pill ${filtroTipo==='dia'?'active':''}" id="pill-dia" onclick="setFiltro('dia')">Día específico</button>
+        <button class="tab-pill ${filtroTipo==='rango'?'active':''}" id="pill-rango" onclick="setFiltro('rango')">Rango de fechas</button>
+        <button class="tab-pill ${filtroTipo==='todos'?'active':''}" id="pill-todos" onclick="setFiltro('todos')">Todos</button>
+      </div>
+      <div id="filter-inputs"></div>
+    </div>
+    <div id="sup-metricas"></div><div id="sup-lista"></div>`;
+  renderMetricas();renderLista();
+}
+function renderAdminUsuarios(){
+  const el=document.getElementById('admin-tab-content');if(!el)return;
+  const orden={admin:0,gerente:1,supervisor:2,bovedista:3,cajera:4};
+  const sorted=[...usuariosCache].sort((a,b)=>(orden[a.rol]||9)-(orden[b.rol]||9)||a.nombre.localeCompare(b.nombre));
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div style="font-size:14px;color:var(--text2)">${usuariosCache.length} usuarios registrados</div>
+      <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="abrirModalNuevoUsuario()">+ Nuevo usuario</button>
+    </div>
+    <div class="card"><div id="lista-usuarios">
+      ${sorted.map(u=>{
+        const activo=u.activo!==false,color=ROLE_COLOR[u.rol]||'var(--text2)';
+        return`<div class="user-row">
+          <div class="user-avatar" style="background:${color}22;color:${color};border:0.5px solid ${color}44">${initials(u.nombre)}</div>
+          <div class="user-info">
+            <div class="user-name">${u.nombre}
+              ${!activo?'<span class="badge badge-off" style="margin-left:6px">Inactivo</span>':''}
+              ${u.primerAcceso?'<span class="badge badge-pend" style="margin-left:4px">Sin activar</span>':''}
+            </div>
+            <div class="user-meta">@${u.username} · <span style="color:${color}">${ROLE_LBL[u.rol]||u.rol}</span></div>
+          </div>
+          <div class="user-actions">
+            <button class="btn btn-xs btn-outline" onclick="abrirModalEditarUsuario('${u.id}')">Editar</button>
+            <button class="btn btn-xs btn-amber" onclick="resetearPass('${u.id}')">Reset pass</button>
+            ${u.id!==currentUser.id?`<button class="btn btn-xs ${activo?'btn-red':'btn-green'}" onclick="toggleActivo('${u.id}',${activo})">${activo?'Desactivar':'Activar'}</button>`:'<span style="font-size:11px;color:var(--text3)">(tú)</span>'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div></div>`;
+}
+window.abrirModalNuevoUsuario=function(){
+  editingUserId=null;
+  document.getElementById('modal-usr-title').textContent='Nuevo usuario';
+  document.getElementById('modal-usr-btn').textContent='Crear usuario';
+  ['usr-nombre','usr-username','usr-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('usr-rol').value='cajera';
+  document.getElementById('usr-pass-group').style.display='block';
+  document.getElementById('modal-usr-msg').innerHTML='';
+  document.getElementById('modal-usuario').classList.add('open');
+}
+window.abrirModalEditarUsuario=function(id){
+  editingUserId=id;
+  const u=usuariosCache.find(x=>x.id===id);if(!u)return;
+  document.getElementById('modal-usr-title').textContent='Editar usuario';
+  document.getElementById('modal-usr-btn').textContent='Guardar cambios';
+  document.getElementById('usr-nombre').value=u.nombre;
+  document.getElementById('usr-username').value=u.username;
+  document.getElementById('usr-rol').value=u.rol;
+  document.getElementById('usr-pass-group').style.display='none';
+  document.getElementById('modal-usr-msg').innerHTML='';
+  document.getElementById('modal-usuario').classList.add('open');
+}
+window.guardarUsuario=async function(){
+  const nombre=document.getElementById('usr-nombre').value.trim(),username=document.getElementById('usr-username').value.trim().toLowerCase(),rol=document.getElementById('usr-rol').value,pass=document.getElementById('usr-pass').value.trim(),msg=document.getElementById('modal-usr-msg');
+  if(!nombre||!username){msg.innerHTML='<div class="alert alert-danger">Nombre y usuario son obligatorios.</div>';return}
+  if(!editingUserId&&!pass){msg.innerHTML='<div class="alert alert-danger">Ingresa una contraseña temporal.</div>';return}
+  const existe=usuariosCache.find(u=>u.username===username&&u.id!==editingUserId);
+  if(existe){msg.innerHTML='<div class="alert alert-danger">Ese usuario ya existe.</div>';return}
+  try{
+    if(editingUserId){await updateDoc(doc(db,'usuarios',editingUserId),{nombre,username,rol});}
+    else{await addDoc(collection(db,'usuarios'),{nombre,username,rol,pass,primerAcceso:true,activo:true,createdAt:serverTimestamp()});}
+    msg.innerHTML=editingUserId?'<div class="alert alert-success">✓ Usuario actualizado.</div>':`<div class="alert alert-success">✓ Usuario creado.<br>@${username} · Contraseña: <strong>${pass}</strong></div>`;
+    const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+    setTimeout(()=>{closeModal('modal-usuario');renderAdminUsuarios();},2000);
+  }catch(e){msg.innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>'}
+}
+window.resetearPass=async function(id){
+  const u=usuariosCache.find(x=>x.id===id);if(!u)return;
+  const np=prompt(`Nueva contraseña temporal para ${u.nombre}:`);
+  if(!np||np.length<4){if(np!==null)alert('Mínimo 4 caracteres.');return}
+  await updateDoc(doc(db,'usuarios',id),{pass:np,primerAcceso:true});
+  alert(`✓ Contraseña de ${u.nombre} reseteada.\nContraseña temporal: "${np}"`);
+  const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderAdminUsuarios();
+}
+window.toggleActivo=async function(id,activo){
+  const u=usuariosCache.find(x=>x.id===id);
+  if(!confirm(`¿${activo?'Desactivar':'Activar'} a ${u?.nombre}?`))return;
+  await updateDoc(doc(db,'usuarios',id),{activo:!activo});
+  const snap=await getDocs(collection(db,'usuarios'));usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderAdminUsuarios();
+}
+</script>
+<!-- MODAL editar corte (solo admin) -->
+<div class="modal-overlay" id="modal-edit-corte">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">✏️ Editar corte — Solo administrador</div>
+    <div class="alert alert-amber" style="margin-bottom:1rem">⚠️ Cualquier modificación queda registrada con tu nombre y la hora del cambio.</div>
+    <div class="modal-actions" style="margin-bottom:1rem;margin-top:0">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-edit-corte')">Cancelar</button>
+      <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="guardarEdicionCorte()">Guardar cambios</button>
+    </div>
+    <div id="edit-corte-fields"></div>
+    <div id="edit-corte-msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-edit-corte')">Cancelar</button>
+      <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="guardarEdicionCorte()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
