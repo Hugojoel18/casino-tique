@@ -453,9 +453,19 @@ function setSyncStatus(ok){const dot=document.getElementById('sync-dot'),txt=doc
 
 // ── INIT ──────────────────────────────────────────────────────
 async function arrancar(){
-  const adminRef=doc(db,'usuarios','admin');
-  const snap=await getDoc(adminRef);
-  if(!snap.exists()) await setDoc(adminRef,{nombre:'Hugo Esquer',username:'admin',rol:'admin',pass:'Admin2024',primerAcceso:true,activo:true,createdAt:serverTimestamp()});
+  try{
+    // Timeout de 8 segundos — si Firebase no responde, mostramos login igual
+    const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),8000));
+    const adminRef=doc(db,'usuarios','admin');
+    await Promise.race([
+      getDoc(adminRef).then(async snap=>{
+        if(!snap.exists()) await setDoc(adminRef,{nombre:'Hugo Esquer',username:'admin',rol:'admin',pass:'Admin2024',primerAcceso:true,activo:true,createdAt:serverTimestamp()});
+      }),
+      timeout
+    ]);
+  }catch(e){
+    console.warn('Firebase tardó o falló en arrancar:', e.message);
+  }
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('login-screen').style.display='flex';
 }
