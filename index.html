@@ -1407,30 +1407,6 @@ window.abrirModalEditarCorte=function(id,rol){
   document.getElementById('edit-corte-msg').innerHTML='';
   document.getElementById('modal-edit-corte').classList.add('open');
 }
-  const c=cortesCache.find(x=>x.id===id);if(!c)return;
-  const inp=(id,val,label,color='')=>`<div class="fg"><label style="color:${color||'var(--text2)'}">${label}</label><input type="number" id="${id}" value="${val||0}" step="0.01" style="width:100%;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none"></div>`;
-  document.getElementById('edit-corte-fields').innerHTML=`
-    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Corte de <strong style="color:var(--text)">${c.cajera}</strong> · ${fmtTs(c.fecha)}</div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px">📋 Datos cajera</div>
-    ${inp('ec-totalEfectivo',c.totalEfectivo,'Efectivo declarado')}
-    ${inp('ec-totalTarjetas',c.totalTarjetas,'Tarjetas declaradas')}
-    ${inp('ec-totalManuales',c.totalManuales,'Pagos manuales declarados')}
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:12px 0 8px">🏦 Datos bovedista / sistema</div>
-    ${inp('ec-sys_efectivo',c.sys_efectivo,'Efectivo (sistema)')}
-    ${inp('ec-sys_tarjetas',c.sys_tarjetas,'Tarjetas (sistema)')}
-    ${inp('ec-sys_manuales',c.sys_pagosManuales,'Pagos manuales (sistema)')}
-    ${inp('ec-sys_jackpots',c.sys_jackpots,'Jackpots (sistema)')}
-    ${inp('ec-sys_balance',c.sys_balance,'Balance sistema','var(--amber)')}
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:12px 0 8px">💵 Recibido por bovedista</div>
-    ${inp('ec-bov_efectivo',c.bov_efectivo||c.bov_efectivoRecibido,'Efectivo recibido')}
-    ${inp('ec-bov_tarjetas',c.bov_tarjetas,'Tarjetas recibidas')}
-    ${inp('ec-bov_manuales',c.bov_manuales,'Manuales recibidos')}
-    <div class="fg"><label style="color:var(--red)">Motivo de la corrección (obligatorio)</label>
-      <textarea id="ec-motivo" placeholder="Describe el motivo de esta corrección..." style="width:100%;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--red-border);border-radius:var(--radius);color:var(--text);font-size:14px;outline:none;resize:vertical;min-height:60px"></textarea>
-    </div>`;
-  document.getElementById('edit-corte-msg').innerHTML='';
-  document.getElementById('modal-edit-corte').classList.add('open');
-}
 window.guardarEdicionCorte=async function(){
   if(!editingCorteId||(editingRol!=='admin'&&editingRol!=='gerente'))return;
   const motivo=document.getElementById('ec-motivo').value.trim();
