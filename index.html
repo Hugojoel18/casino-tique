@@ -483,7 +483,7 @@ async function arrancar(){
       timeout
     ]);
   }catch(e){
-    console.warn('Firebase tardó o falló en arrancar:', e.message);
+    console.warn('Firebase tardó o falló en arrancar:', e.code, e.message);
   }
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('login-screen').style.display='flex';
@@ -496,7 +496,19 @@ window.doLogin=async function(){
   const pass=document.getElementById('login-pass').value;
   const err=document.getElementById('login-error');
   if(!username||!pass){err.style.display='block';err.textContent='Ingresa usuario y contraseña.';return}
-  const snap=await db.collection('usuarios').get();
+  let snap;
+  try{
+    snap=await db.collection('usuarios').get();
+  }catch(e){
+    err.style.display='block';
+    if(e.code==='permission-denied'||e.message?.includes('permission')){
+      err.textContent='Error de permisos en Firestore. Revisa las reglas en Firebase Console.';
+    } else {
+      err.textContent='Error de conexión: '+e.message;
+    }
+    console.error('doLogin error:',e);
+    return;
+  }
   let userData=null,userId=null;
   snap.forEach(d=>{const u=d.data();if(u.username?.toLowerCase()===username&&u.pass===pass&&u.activo!==false){userData=u;userId=d.id;}});
   if(!userData){err.style.display='block';err.textContent='Usuario o contraseña incorrectos.';return}
