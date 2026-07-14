@@ -496,7 +496,7 @@ window.doLogin=async function(){
   const pass=document.getElementById('login-pass').value;
   const err=document.getElementById('login-error');
   if(!username||!pass){err.style.display='block';err.textContent='Ingresa usuario y contraseña.';return}
-  const snap=await db.collection('usuarios'.get());
+  const snap=await db.collection('usuarios').get();
   let userData=null,userId=null;
   snap.forEach(d=>{const u=d.data();if(u.username?.toLowerCase()===username&&u.pass===pass&&u.activo!==false){userData=u;userId=d.id;}});
   if(!userData){err.style.display='block';err.textContent='Usuario o contraseña incorrectos.';return}
@@ -1014,7 +1014,7 @@ window.confirmarBov=async function(id){
 // GERENTE — cortes + gestión de usuarios (sin tocar admins)
 // ══════════════════════════════════════════════════════════════
 async function renderGerente(){
-  const snap=await db.collection('usuarios'.get());
+  const snap=await db.collection('usuarios').get();
   usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   document.getElementById('main-content').innerHTML=`
     <div class="sec-header"><div><h3>Panel de gerente</h3><p>Bienvenido, ${currentUser.nombre}</p></div></div>
@@ -1109,13 +1109,13 @@ window.guardarUsuarioGerente=async function(){
   if(['admin'].includes(rol)){msg.innerHTML='<div class="alert alert-danger">No tienes permiso para crear administradores.</div>';return}
   if(!nombre||!username){msg.innerHTML='<div class="alert alert-danger">Nombre y usuario son obligatorios.</div>';return}
   if(!pass){msg.innerHTML='<div class="alert alert-danger">Ingresa una contraseña temporal.</div>';return}
-  const todos=await db.collection('usuarios'.get());
+  const todos=await db.collection('usuarios').get();
   const existe=todos.docs.find(d=>d.data().username===username);
   if(existe){msg.innerHTML='<div class="alert alert-danger">Ese usuario ya existe.</div>';return}
   try{
     await db.collection('usuarios').add({nombre,username,rol,pass,primerAcceso:true,activo:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     msg.innerHTML=`<div class="alert alert-success">✓ Usuario creado.<br>@${username} · Contraseña temporal: <strong>${pass}</strong></div>`;
-    const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const snap=await db.collection('usuarios').get();usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
     setTimeout(()=>{closeModal('modal-usuario');renderGerenteUsuarios();},2000);
   }catch(e){msg.innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>'}
 }
@@ -1126,7 +1126,7 @@ window.resetearPassGerente=async function(id){
   if(!np||np.length<4){if(np!==null)alert('Mínimo 4 caracteres.');return}
   await db.collection('usuarios').doc(id).update({pass:np,primerAcceso:true});
   alert(`✓ Contraseña de ${u.nombre} reseteada.\nContraseña temporal: "${np}"`);
-  const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap=await db.collection('usuarios').get();usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderGerenteUsuarios();
 }
 
@@ -1504,7 +1504,7 @@ window.exportarCSV=function(){
 // ADMIN
 // ══════════════════════════════════════════════════════════════
 async function renderAdmin(){
-  const snap=await db.collection('usuarios'.get());
+  const snap=await db.collection('usuarios').get();
   usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   document.getElementById('main-content').innerHTML=`
     <div class="sec-header"><div><h3>Panel de administrador</h3><p>Bienvenido, ${currentUser.nombre}</p></div></div>
@@ -1693,7 +1693,7 @@ window.guardarUsuario=async function(){
     if(editingUserId){await db.collection('usuarios').doc(editingUserId).update({nombre,username,rol});}
     else{await db.collection('usuarios').add({nombre,username,rol,pass,primerAcceso:true,activo:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}
     msg.innerHTML=editingUserId?'<div class="alert alert-success">✓ Usuario actualizado.</div>':`<div class="alert alert-success">✓ Usuario creado.<br>@${username} · Contraseña: <strong>${pass}</strong></div>`;
-    const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const snap=await db.collection('usuarios').get();usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
     setTimeout(()=>{closeModal('modal-usuario');renderAdminUsuarios();},2000);
   }catch(e){msg.innerHTML='<div class="alert alert-danger">Error: '+e.message+'</div>'}
 }
@@ -1703,14 +1703,14 @@ window.resetearPass=async function(id){
   if(!np||np.length<4){if(np!==null)alert('Mínimo 4 caracteres.');return}
   await db.collection('usuarios').doc(id).update({pass:np,primerAcceso:true});
   alert(`✓ Contraseña de ${u.nombre} reseteada.\nContraseña temporal: "${np}"`);
-  const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap=await db.collection('usuarios').get();usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderAdminUsuarios();
 }
 window.toggleActivo=async function(id,activo){
   const u=usuariosCache.find(x=>x.id===id);
   if(!confirm(`¿${activo?'Desactivar':'Activar'} a ${u?.nombre}?`))return;
   await db.collection('usuarios').doc(id).update({activo:!activo});
-  const snap=await db.collection('usuarios'.get());usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap=await db.collection('usuarios').get();usuariosCache=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderAdminUsuarios();
 }
 </script>
