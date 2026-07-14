@@ -424,8 +424,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 </div>
 
 <script>
-// Fallback de seguridad: si el módulo JS falla al cargar (ej: error de red o build),
-// forzamos el login después de 12 segundos para no quedar atrapados en loading.
+// Fallback de seguridad: si Firebase tarda, muestra login después de 25 segundos
 (function(){
   var t = setTimeout(function(){
     var ls = document.getElementById('loading-screen');
@@ -433,10 +432,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     if(ls && ls.style.display !== 'none'){
       ls.style.display = 'none';
       if(login) login.style.display = 'flex';
-      var err = document.getElementById('login-error');
-      if(err){ err.style.display='block'; err.textContent='Error al conectar con Firebase. Verifica tu conexión e intenta de nuevo.'; }
+      // No mostrar error — Firebase puede estar OK, solo tardó en cargar
     }
-  }, 6000);
+  }, 25000);
   // Si el módulo carga OK, el propio arrancar() llama a esto y cancelamos el fallback
   window.__cancelFallback = function(){ clearTimeout(t); };
 })();
